@@ -32,6 +32,10 @@ An iOS app to track your NYC subway station visits.
 
 [Add screenshots here]
 
+## Privacy
+
+See [Privacy Policy](PRIVACY.md)
+
 ## License
 
 MIT - see [LICENSE](LICENSE) for details.

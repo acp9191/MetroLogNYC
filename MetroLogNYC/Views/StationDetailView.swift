@@ -46,7 +46,7 @@ struct StationDetailView: View {
                         // Borough Section
                         HStack {
                             Label {
-                                Text(station.borough)
+                                Text(station.borough.rawValue)
                                     .font(.body)
                             } icon: {
                                 Image(systemName: "building.2")
@@ -129,10 +129,10 @@ struct StationDetailView: View {
     StationDetailView(
         station: Station(
             name: "Times Sq-42 St",
-            lines: ["1", "2", "3", "7", "N", "Q", "R", "W", "S"],
+            lines: [.one, .two, .three, .seven, .n, .q, .r, .w, .gs],
             latitude: 40.754672,
             longitude: -73.986754,
-            borough: "Manhattan",
+            borough: .manhattan,
             isVisited: true,
             visitedDate: Date()
         )

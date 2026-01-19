@@ -82,7 +82,7 @@ struct HomeView: View {
                             .padding(.horizontal)
 
                         VStack(spacing: 12) {
-                            ForEach(["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"], id: \.self) { borough in
+                            ForEach(Borough.allCases) { borough in
                                 BoroughCard(borough: borough, stations: stations)
                             }
                         }
@@ -203,7 +203,7 @@ struct LineCard: View {
 
 // MARK: - Borough Card
 struct BoroughCard: View {
-    let borough: String
+    let borough: Borough
     let stations: [Station]
 
     private var boroughStations: [Station] {
@@ -221,12 +221,11 @@ struct BoroughCard: View {
 
     private var icon: String {
         switch borough {
-        case "Manhattan": return "building.2"
-        case "Brooklyn": return "tram.fill"
-        case "Queens": return "airplane"
-        case "Bronx": return "leaf"
-        case "Staten Island": return "ferry"
-        default: return "mappin"
+        case .manhattan: return "building.2"
+        case .brooklyn: return "tram.fill"
+        case .queens: return "airplane"
+        case .bronx: return "leaf"
+        case .statenIsland: return "ferry"
         }
     }
 
@@ -239,7 +238,7 @@ struct BoroughCard: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(borough)
+                    Text(borough.rawValue)
                         .font(.headline)
                     Spacer()
                     Text("\(visitedCount)/\(boroughStations.count)")

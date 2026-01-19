@@ -20,8 +20,19 @@ final class Station {
     /// Station longitude
     var longitude: Double
 
-    /// Borough where the station is located
-    var borough: String
+    /// Borough where the station is located (stored as raw value for SwiftData)
+    private var boroughRawValue: String
+
+    /// Type-safe borough accessor
+    var borough: Borough {
+        get { Borough(rawValue: boroughRawValue) ?? .manhattan }
+        set { boroughRawValue = newValue.rawValue }
+    }
+
+    /// Type-safe subway lines accessor
+    var subwayLines: [SubwayLine] {
+        lines.compactMap { SubwayLine.from($0) }
+    }
 
     /// Whether the user has visited this station
     var isVisited: Bool
@@ -29,22 +40,25 @@ final class Station {
     /// Date when the station was marked as visited
     var visitedDate: Date?
 
+    /// Optional station complex this station belongs to
+    var complex: StationComplex?
+
     init(
         id: UUID = UUID(),
         name: String,
-        lines: [String],
+        lines: [SubwayLine],
         latitude: Double,
         longitude: Double,
-        borough: String,
+        borough: Borough,
         isVisited: Bool = false,
         visitedDate: Date? = nil
     ) {
         self.id = id
         self.name = name
-        self.lines = lines
+        self.lines = lines.map { $0.rawValue }
         self.latitude = latitude
         self.longitude = longitude
-        self.borough = borough
+        self.boroughRawValue = borough.rawValue
         self.isVisited = isVisited
         self.visitedDate = visitedDate
     }

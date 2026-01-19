@@ -8,7 +8,7 @@ struct MetroLogNYCApp: App {
 
     init() {
         do {
-            let schema = Schema([Station.self])
+            let schema = Schema([Station.self, StationComplex.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {

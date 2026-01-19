@@ -83,10 +83,9 @@ struct LineDetailView: View {
     }
 
     // Group stations by borough
-    private var stationsByBorough: [(borough: String, stations: [Station])] {
+    private var stationsByBorough: [(borough: Borough, stations: [Station])] {
         let grouped = Dictionary(grouping: lineStations) { $0.borough }
-        let order = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
-        return order.compactMap { borough in
+        return Borough.allCases.compactMap { borough in
             guard let stations = grouped[borough], !stations.isEmpty else { return nil }
             return (borough, stations.sorted { $0.name < $1.name })
         }
@@ -109,7 +108,7 @@ struct LineDetailView: View {
 
             // Stations grouped by borough
             ForEach(stationsByBorough, id: \.borough) { group in
-                Section(header: Text(group.borough)) {
+                Section(header: Text(group.borough.rawValue)) {
                     ForEach(group.stations) { station in
                         LineStationRow(station: station, currentLine: line)
                             .contentShape(Rectangle())

@@ -19,6 +19,7 @@
 		A1000001232B5F0000000010 /* SubwayLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000010 /* SubwayLine.swift */; };
 		A1000001232B5F0000000011 /* StationData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000011 /* StationData.swift */; };
 		A1000001232B5F0000000012 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000012 /* Assets.xcassets */; };
+		A1000001232B5F0000000014 /* StationComplex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000014 /* StationComplex.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		A1000002232B5F0000000011 /* StationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationData.swift; sourceTree = "<group>"; };
 		A1000002232B5F0000000012 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1000002232B5F0000000013 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000002232B5F0000000014 /* StationComplex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationComplex.swift; sourceTree = "<group>"; };
 		A1000002232B5F0000000099 /* MetroLogNYC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetroLogNYC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -88,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000002232B5F0000000009 /* Station.swift */,
+				A1000002232B5F0000000014 /* StationComplex.swift */,
 				A1000002232B5F0000000010 /* SubwayLine.swift */,
 			);
 			path = Models;
@@ -187,6 +190,7 @@
 				A1000001232B5F0000000007 /* StationRowView.swift in Sources */,
 				A1000001232B5F0000000008 /* LineDetailView.swift in Sources */,
 				A1000001232B5F0000000009 /* Station.swift in Sources */,
+				A1000001232B5F0000000014 /* StationComplex.swift in Sources */,
 				A1000001232B5F0000000010 /* SubwayLine.swift in Sources */,
 				A1000001232B5F0000000011 /* StationData.swift in Sources */,
 			);
@@ -323,7 +327,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 75URM65WPQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MetroLogNYC/Info.plist;
@@ -354,7 +358,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 75URM65WPQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MetroLogNYC/Info.plist;

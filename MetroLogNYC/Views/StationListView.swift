@@ -7,7 +7,7 @@ struct StationListView: View {
     @Query(sort: \Station.name) private var stations: [Station]
 
     @State private var searchText = ""
-    @State private var selectedBorough: String? = nil
+    @State private var selectedBorough: Borough? = nil
     @State private var selectedLine: String? = nil
     @State private var visitedFilter: StationFilter = .all
     @State private var sortOption: StationSort = .name
@@ -22,7 +22,7 @@ struct StationListView: View {
             result = result.filter { station in
                 station.name.localizedCaseInsensitiveContains(searchText) ||
                 station.lines.contains { $0.localizedCaseInsensitiveContains(searchText) } ||
-                station.borough.localizedCaseInsensitiveContains(searchText)
+                station.borough.rawValue.localizedCaseInsensitiveContains(searchText)
             }
         }
 
@@ -51,7 +51,7 @@ struct StationListView: View {
         case .name:
             result.sort { $0.name < $1.name }
         case .borough:
-            result.sort { ($0.borough, $0.name) < ($1.borough, $1.name) }
+            result.sort { ($0.borough.rawValue, $0.name) < ($1.borough.rawValue, $1.name) }
         case .recentlyVisited:
             result.sort { station1, station2 in
                 let date1 = station1.visitedDate ?? .distantPast
@@ -164,11 +164,11 @@ struct StationListView: View {
                             }
                             ForEach(Borough.allCases) { borough in
                                 Button {
-                                    selectedBorough = borough.rawValue
+                                    selectedBorough = borough
                                 } label: {
                                     HStack {
                                         Text(borough.rawValue)
-                                        if selectedBorough == borough.rawValue {
+                                        if selectedBorough == borough {
                                             Image(systemName: "checkmark")
                                         }
                                     }
@@ -221,7 +221,7 @@ struct ProgressHeader: View {
 
 // MARK: - Filter Chips View
 struct FilterChipsView: View {
-    @Binding var selectedBorough: String?
+    @Binding var selectedBorough: Borough?
     @Binding var selectedLine: String?
     @Binding var visitedFilter: StationFilter
 
@@ -229,7 +229,7 @@ struct FilterChipsView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 if let borough = selectedBorough {
-                    FilterChip(text: borough) {
+                    FilterChip(text: borough.rawValue) {
                         selectedBorough = nil
                     }
                 }

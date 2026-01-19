@@ -35,7 +35,7 @@ struct StationRowView: View {
 
                 // Borough and visited date
                 HStack {
-                    Text(station.borough)
+                    Text(station.borough.rawValue)
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -66,10 +66,10 @@ struct StationRowView: View {
         StationRowView(
             station: Station(
                 name: "Times Sq-42 St",
-                lines: ["1", "2", "3", "7", "N", "Q", "R", "W", "S"],
+                lines: [.one, .two, .three, .seven, .n, .q, .r, .w, .gs],
                 latitude: 40.754672,
                 longitude: -73.986754,
-                borough: "Manhattan",
+                borough: .manhattan,
                 isVisited: true,
                 visitedDate: Date()
             )
@@ -78,10 +78,10 @@ struct StationRowView: View {
         StationRowView(
             station: Station(
                 name: "14 St-Union Sq",
-                lines: ["4", "5", "6", "L", "N", "Q", "R", "W"],
+                lines: [.four, .five, .six, .l, .n, .q, .r, .w],
                 latitude: 40.735736,
                 longitude: -73.990568,
-                borough: "Manhattan",
+                borough: .manhattan,
                 isVisited: false
             )
         )

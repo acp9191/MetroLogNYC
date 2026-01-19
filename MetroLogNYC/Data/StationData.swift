@@ -319,14 +319,14 @@ struct StationData {
 
         // BMT Broadway Line (N/Q/R/W) - Manhattan
         StationInfo(name: "Lexington Av/59 St", lines: [.n, .r, .w], latitude: 40.762660, longitude: -73.967258, borough: .manhattan, complexName: "Lexington Av/59 St"),
-        StationInfo(name: "Lexington Av/63 St", lines: [.f, .m, .q], latitude: 40.764629, longitude: -73.966113, borough: .manhattan),
+        StationInfo(name: "Lexington Av/63 St", lines: [.m, .q], latitude: 40.764629, longitude: -73.966113, borough: .manhattan),
         StationInfo(name: "57 St-7 Av", lines: [.n, .q, .r, .w], latitude: 40.764664, longitude: -73.980658, borough: .manhattan),
         StationInfo(name: "49 St", lines: [.n, .q, .r, .w], latitude: 40.759901, longitude: -73.984139, borough: .manhattan),
         StationInfo(name: "28 St", lines: [.n, .r, .w], latitude: 40.745494, longitude: -73.988691, borough: .manhattan),
         StationInfo(name: "23 St", lines: [.n, .r, .w], latitude: 40.741303, longitude: -73.989344, borough: .manhattan),
         StationInfo(name: "8 St-NYU", lines: [.n, .r, .w], latitude: 40.730328, longitude: -73.992629, borough: .manhattan),
         StationInfo(name: "Prince St", lines: [.n, .r, .w], latitude: 40.724329, longitude: -73.997702, borough: .manhattan),
-        StationInfo(name: "Canal St", lines: [.n, .r, .w], latitude: 40.719527, longitude: -74.001775, borough: .manhattan, complexName: "Canal St"),
+        StationInfo(name: "Canal St", lines: [.r, .w], latitude: 40.719527, longitude: -74.001775, borough: .manhattan, complexName: "Canal St"),
         StationInfo(name: "Canal St", lines: [.n, .q], latitude: 40.718711, longitude: -74.000183, borough: .manhattan, complexName: "Canal St"),
         StationInfo(name: "Whitehall St-South Ferry", lines: [.r, .w], latitude: 40.703087, longitude: -74.012994, borough: .manhattan, complexName: "Whitehall St-South Ferry / South Ferry"),
         StationInfo(name: "Cortlandt St", lines: [.r, .w], latitude: 40.710588, longitude: -74.011571, borough: .manhattan, complexName: "Fulton St / Park Pl / Cortlandt St"),
@@ -626,9 +626,9 @@ struct StationData {
         StationInfo(name: "Tottenville", lines: [.sir], latitude: 40.512764, longitude: -74.251961, borough: .statenIsland),
 
         // Additional Manhattan Stations - Second Avenue Subway
-        StationInfo(name: "72 St", lines: [.n, .q, .r], latitude: 40.768799, longitude: -73.958424, borough: .manhattan),
-        StationInfo(name: "86 St", lines: [.n, .q, .r], latitude: 40.777891, longitude: -73.951618, borough: .manhattan),
-        StationInfo(name: "96 St", lines: [.n, .q, .r], latitude: 40.784318, longitude: -73.947152, borough: .manhattan),
+        StationInfo(name: "72 St", lines: [.q], latitude: 40.768799, longitude: -73.958424, borough: .manhattan),
+        StationInfo(name: "86 St", lines: [.q], latitude: 40.777891, longitude: -73.951618, borough: .manhattan),
+        StationInfo(name: "96 St", lines: [.q], latitude: 40.784318, longitude: -73.947152, borough: .manhattan),
         // Missing Manhattan Stations
         StationInfo(name: "Grand St", lines: [.b, .d], latitude: 40.718267, longitude: -73.993753, borough: .manhattan),
         StationInfo(name: "5 Av-59 St", lines: [.n, .r, .w], latitude: 40.764811, longitude: -73.973347, borough: .manhattan),
@@ -657,7 +657,7 @@ struct StationData {
         StationInfo(name: "Eastchester-Dyre Av", lines: [.five], latitude: 40.888224, longitude: -73.830834, borough: .bronx),
 
         // Additional Bronx Stations
-        StationInfo(name: "3 Av-149 St", lines: [.five], latitude: 40.816109, longitude: -73.917757, borough: .bronx),
+        StationInfo(name: "3 Av-149 St", lines: [.two, .five], latitude: 40.816109, longitude: -73.917757, borough: .bronx),
         StationInfo(name: "Mt Eden Av", lines: [.four], latitude: 40.844434, longitude: -73.914685, borough: .bronx),
 
         // Queens - Additional Stations

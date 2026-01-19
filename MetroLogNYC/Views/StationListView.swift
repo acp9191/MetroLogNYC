@@ -1,28 +1,34 @@
 import SwiftUI
 import SwiftData
 
-/// Main list view displaying all subway stations
+/// Main list view displaying subway stations grouped by complex
 struct StationListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Station.name) private var stations: [Station]
+    @Query(sort: \StationComplex.name) private var complexes: [StationComplex]
 
     @State private var searchText = ""
     @State private var selectedBorough: Borough? = nil
     @State private var selectedLine: String? = nil
     @State private var visitedFilter: StationFilter = .all
     @State private var sortOption: StationSort = .name
-    @State private var selectedStation: Station?
+    @State private var selectedItem: StationDisplayItem?
     @State private var showingFilters = false
 
-    private var filteredStations: [Station] {
-        var result = stations
+    /// Create display items from stations and complexes
+    private var displayItems: [StationDisplayItem] {
+        StationDisplayItem.createDisplayItems(stations: stations, complexes: complexes)
+    }
+
+    private var filteredItems: [StationDisplayItem] {
+        var result = displayItems
 
         // Search filter
         if !searchText.isEmpty {
-            result = result.filter { station in
-                station.name.localizedCaseInsensitiveContains(searchText) ||
-                station.lines.contains { $0.localizedCaseInsensitiveContains(searchText) } ||
-                station.borough.rawValue.localizedCaseInsensitiveContains(searchText)
+            result = result.filter { item in
+                item.name.localizedCaseInsensitiveContains(searchText) ||
+                item.lines.contains { $0.localizedCaseInsensitiveContains(searchText) } ||
+                item.borough.rawValue.localizedCaseInsensitiveContains(searchText)
             }
         }
 
@@ -53,9 +59,9 @@ struct StationListView: View {
         case .borough:
             result.sort { ($0.borough.rawValue, $0.name) < ($1.borough.rawValue, $1.name) }
         case .recentlyVisited:
-            result.sort { station1, station2 in
-                let date1 = station1.visitedDate ?? .distantPast
-                let date2 = station2.visitedDate ?? .distantPast
+            result.sort { item1, item2 in
+                let date1 = item1.lastVisitedDate ?? .distantPast
+                let date2 = item2.lastVisitedDate ?? .distantPast
                 return date1 > date2
             }
         }
@@ -63,13 +69,20 @@ struct StationListView: View {
         return result
     }
 
-    private var visitedCount: Int {
-        stations.filter { $0.isVisited }.count
+    /// Count of unique locations (complexes + standalone stations)
+    private var totalLocationCount: Int {
+        displayItems.count
     }
 
+    /// Count of visited locations
+    private var visitedLocationCount: Int {
+        displayItems.filter { $0.isVisited }.count
+    }
+
+    /// Progress percentage
     private var progress: Double {
-        guard !stations.isEmpty else { return 0 }
-        return Double(visitedCount) / Double(stations.count)
+        guard totalLocationCount > 0 else { return 0 }
+        return Double(visitedLocationCount) / Double(totalLocationCount)
     }
 
     private let allLines = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E", "F", "G", "J", "L", "M", "N", "Q", "R", "W", "Z", "GS", "FS", "RS", "SIR"]
@@ -79,8 +92,8 @@ struct StationListView: View {
             VStack(spacing: 0) {
                 // Progress Header
                 ProgressHeader(
-                    visitedCount: visitedCount,
-                    totalCount: stations.count,
+                    visitedCount: visitedLocationCount,
+                    totalCount: totalLocationCount,
                     progress: progress
                 )
 
@@ -98,23 +111,23 @@ struct StationListView: View {
 
                 // Station List
                 List {
-                    ForEach(filteredStations) { station in
-                        StationRowView(station: station) {
-                            station.toggleVisited()
+                    ForEach(filteredItems) { item in
+                        StationDisplayRowView(item: item) {
+                            item.toggleVisited()
                         }
                         .onTapGesture {
-                            selectedStation = station
+                            selectedItem = item
                         }
                         .swipeActions(edge: .leading) {
                             Button {
-                                station.toggleVisited()
+                                item.toggleVisited()
                             } label: {
                                 Label(
-                                    station.isVisited ? "Unvisit" : "Visit",
-                                    systemImage: station.isVisited ? "xmark.circle" : "checkmark.circle"
+                                    item.isVisited ? "Unvisit" : "Visit",
+                                    systemImage: item.isVisited ? "xmark.circle" : "checkmark.circle"
                                 )
                             }
-                            .tint(station.isVisited ? .orange : .blue)
+                            .tint(item.isVisited ? .orange : .blue)
                         }
                     }
                 }
@@ -180,8 +193,8 @@ struct StationListView: View {
                     }
                 }
             }
-            .sheet(item: $selectedStation) { station in
-                StationDetailView(station: station)
+            .sheet(item: $selectedItem) { item in
+                ComplexDetailView(item: item)
             }
         }
     }
@@ -199,7 +212,7 @@ struct ProgressHeader: View {
                 VStack(alignment: .leading) {
                     Text("\(visitedCount) of \(totalCount)")
                         .font(.headline)
-                    Text("stations visited")
+                    Text("locations visited")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -315,5 +328,5 @@ struct LineFilterBar: View {
 
 #Preview {
     StationListView()
-        .modelContainer(for: Station.self, inMemory: true)
+        .modelContainer(for: [Station.self, StationComplex.self], inMemory: true)
 }

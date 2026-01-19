@@ -5,6 +5,7 @@ import MapKit
 struct StationDetailView: View {
     @Bindable var station: Station
     @Environment(\.dismiss) private var dismiss
+    @State private var showingComplexDetail = false
 
     var body: some View {
         NavigationStack {
@@ -56,6 +57,36 @@ struct StationDetailView: View {
                         .padding()
                         .background(Color(.secondarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        // Complex Section (if part of a complex)
+                        if let complex = station.complex {
+                            Button {
+                                showingComplexDetail = true
+                            } label: {
+                                HStack {
+                                    Label {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Part of Complex")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            Text(complex.name)
+                                                .font(.body)
+                                                .foregroundStyle(.primary)
+                                        }
+                                    } icon: {
+                                        Image(systemName: "arrow.triangle.branch")
+                                            .foregroundStyle(.blue)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
 
                         // Visited Toggle
                         VStack(spacing: 12) {
@@ -110,6 +141,11 @@ struct StationDetailView: View {
                     Button("Done") {
                         dismiss()
                     }
+                }
+            }
+            .sheet(isPresented: $showingComplexDetail) {
+                if let complex = station.complex {
+                    ComplexDetailView(item: StationDisplayItem(complex: complex))
                 }
             }
         }

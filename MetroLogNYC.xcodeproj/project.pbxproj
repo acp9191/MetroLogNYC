@@ -14,6 +14,8 @@
 		8536CC252F1EE2EA0036F944 /* LineDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8536CC242F1EE2EA0036F944 /* LineDetailView.swift */; };
 		8536CC282F1EE9E60036F944 /* LineDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8536CC262F1EE9E60036F944 /* LineDetailView.swift */; };
 		8536CC292F1EE9E60036F944 /* LineTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8536CC272F1EE9E60036F944 /* LineTreeView.swift */; };
+		8536CC2B2F1F07FD0036F944 /* SubwayShapeData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8536CC2A2F1F07FD0036F944 /* SubwayShapeData.swift */; };
+		8536CC332F1F08510036F944 /* subway_shapes.json in Resources */ = {isa = PBXBuildFile; fileRef = 8536CC312F1F08510036F944 /* subway_shapes.json */; };
 		A1000001232B5F0000000001 /* MetroLogNYC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000001 /* MetroLogNYC.swift */; };
 		A1000001232B5F0000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000002 /* ContentView.swift */; };
 		A1000001232B5F0000000003 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002232B5F0000000003 /* HomeView.swift */; };
@@ -37,6 +39,8 @@
 		8536CC242F1EE2EA0036F944 /* LineDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineDetailView.swift; sourceTree = "<group>"; };
 		8536CC262F1EE9E60036F944 /* LineDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineDetailView.swift; sourceTree = "<group>"; };
 		8536CC272F1EE9E60036F944 /* LineTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineTreeView.swift; sourceTree = "<group>"; };
+		8536CC2A2F1F07FD0036F944 /* SubwayShapeData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubwayShapeData.swift; sourceTree = "<group>"; };
+		8536CC312F1F08510036F944 /* subway_shapes.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = subway_shapes.json; sourceTree = "<group>"; };
 		A1000002232B5F0000000001 /* MetroLogNYC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetroLogNYC.swift; sourceTree = "<group>"; };
 		A1000002232B5F0000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1000002232B5F0000000003 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -65,6 +69,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8536CC322F1F08510036F944 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8536CC312F1F08510036F944 /* subway_shapes.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A1000004232B5F0000000001 = {
 			isa = PBXGroup;
 			children = (
@@ -76,6 +88,7 @@
 		A1000004232B5F0000000002 /* MetroLogNYC */ = {
 			isa = PBXGroup;
 			children = (
+				8536CC322F1F08510036F944 /* Resources */,
 				A1000002232B5F0000000001 /* MetroLogNYC.swift */,
 				A1000004232B5F0000000003 /* Views */,
 				A1000004232B5F0000000004 /* Models */,
@@ -119,6 +132,7 @@
 		A1000004232B5F0000000005 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				8536CC2A2F1F07FD0036F944 /* SubwayShapeData.swift */,
 				8536CC222F1EE1860036F944 /* LineRouteData.swift */,
 				A1000002232B5F0000000011 /* StationData.swift */,
 			);
@@ -191,6 +205,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8536CC332F1F08510036F944 /* subway_shapes.json in Resources */,
 				A1000001232B5F0000000012 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -212,6 +227,7 @@
 				A1000001232B5F0000000005 /* StationMapView.swift in Sources */,
 				A1000001232B5F0000000006 /* StationDetailView.swift in Sources */,
 				A1000001232B5F0000000007 /* StationRowView.swift in Sources */,
+				8536CC2B2F1F07FD0036F944 /* SubwayShapeData.swift in Sources */,
 				A1000001232B5F0000000008 /* LineDetailView.swift in Sources */,
 				8536CC1D2F1EDE420036F944 /* StationDisplayItem.swift in Sources */,
 				8536CC202F1EDEAA0036F944 /* ComplexDetailView.swift in Sources */,

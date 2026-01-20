@@ -16,6 +16,8 @@ struct StationMapView: View {
     @State private var visitedFilter: StationFilter = .all
     @State private var lineFilter: String? = nil
     @State private var showUserLocation = false
+    @State private var showRouteLines = true
+    @State private var lineShapes: [SubwayLineShape] = []
 
     private var filteredStations: [Station] {
         var result = stations
@@ -41,10 +43,32 @@ struct StationMapView: View {
     // All lines for the filter
     private let allLines = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E", "F", "G", "J", "L", "M", "N", "Q", "R", "W", "Z", "GS", "FS", "RS", "SIR"]
 
+    /// Shapes to display based on current filter
+    private var filteredShapes: [SubwayLineShape] {
+        if let line = lineFilter {
+            return lineShapes.filter { $0.lineId == line }
+        }
+        return lineShapes
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Map(position: $cameraPosition, selection: $selectedStation) {
+                    // Route lines (rendered first, underneath stations)
+                    if showRouteLines {
+                        ForEach(filteredShapes, id: \.lineId) { lineShape in
+                            ForEach(Array(lineShape.shapes.enumerated()), id: \.offset) { index, coordinates in
+                                MapPolyline(coordinates: coordinates)
+                                    .stroke(
+                                        SubwayLine.from(lineShape.lineId)?.color ?? .gray,
+                                        lineWidth: lineFilter == nil ? 2 : 4
+                                    )
+                            }
+                        }
+                    }
+
+                    // Station markers
                     ForEach(filteredStations) { station in
                         Annotation(
                             station.name,
@@ -136,6 +160,17 @@ struct StationMapView: View {
                                 .clipShape(Circle())
                         }
 
+                        // Route lines toggle
+                        Button {
+                            showRouteLines.toggle()
+                        } label: {
+                            Image(systemName: showRouteLines ? "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill" : "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath")
+                                .font(.title2)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+
                         Spacer()
 
                         // Location button
@@ -181,6 +216,11 @@ struct StationMapView: View {
                 if let station = selectedStation {
                     StationDetailView(station: station)
                         .presentationDetents([.medium, .large])
+                }
+            }
+            .onAppear {
+                if lineShapes.isEmpty {
+                    lineShapes = SubwayShapeService.shared.allShapes()
                 }
             }
         }

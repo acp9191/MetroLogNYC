@@ -17,7 +17,7 @@ struct StationMapView: View {
     @State private var lineFilter: String? = nil
     @State private var showUserLocation = false
     @State private var showRouteLines = true
-    @State private var lineShapes: [SubwayLineShape] = []
+    @State private var shapesLoaded = false
 
     private var filteredStations: [Station] {
         var result = stations
@@ -45,10 +45,11 @@ struct StationMapView: View {
 
     /// Shapes to display based on current filter
     private var filteredShapes: [SubwayLineShape] {
+        let allShapes = SubwayShapeService.shared.allShapes()
         if let line = lineFilter {
-            return lineShapes.filter { $0.lineId == line }
+            return allShapes.filter { $0.lineId == line }
         }
-        return lineShapes
+        return allShapes
     }
 
     var body: some View {
@@ -56,7 +57,7 @@ struct StationMapView: View {
             ZStack {
                 Map(position: $cameraPosition, selection: $selectedStation) {
                     // Route lines (rendered first, underneath stations)
-                    if showRouteLines {
+                    if showRouteLines && shapesLoaded {
                         ForEach(filteredShapes, id: \.lineId) { lineShape in
                             ForEach(Array(lineShape.shapes.enumerated()), id: \.offset) { index, coordinates in
                                 MapPolyline(coordinates: coordinates)
@@ -218,9 +219,10 @@ struct StationMapView: View {
                         .presentationDetents([.medium, .large])
                 }
             }
-            .onAppear {
-                if lineShapes.isEmpty {
-                    lineShapes = SubwayShapeService.shared.allShapes()
+            .task {
+                if !shapesLoaded {
+                    await SubwayShapeService.shared.waitForLoad()
+                    shapesLoaded = true
                 }
             }
         }

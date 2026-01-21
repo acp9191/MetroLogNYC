@@ -14,6 +14,11 @@ struct MetroLogNYCApp: App {
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }
+
+        // Preload subway shapes in background for faster map loading
+        Task { @MainActor in
+            SubwayShapeService.shared.preload()
+        }
     }
 
     var body: some Scene {

@@ -14,27 +14,29 @@ struct LineDetailView: View {
     /// Stations sorted by route order
     private var orderedStations: [Station] {
         let route = LineRouteData.route(for: line)
-        let stationsByName = Dictionary(grouping: lineStations) { $0.name }
+        return stationsFromNames(route.mainLine, excludeUsed: true)
+    }
 
-        // Order stations according to route data
-        var ordered: [Station] = []
-        for stationName in route.mainLine {
-            if let matches = stationsByName[stationName] {
-                ordered.append(contentsOf: matches)
-            }
+    /// Get the best matching station from duplicates based on proximity to previous station
+    private func bestMatch(from candidates: [Station], previousStation: Station?) -> Station? {
+        guard !candidates.isEmpty else { return nil }
+        guard candidates.count > 1, let prev = previousStation else {
+            return candidates.first
         }
 
-        // Add any stations not in route data (fallback)
-        // Exclude branch stations since they're displayed separately
-        var allRouteNames = Set(route.mainLine)
-        for branch in route.branches {
-            allRouteNames.formUnion(branch.stations)
+        // Pick the candidate closest to the previous station
+        return candidates.min { station1, station2 in
+            let dist1 = distance(from: prev, to: station1)
+            let dist2 = distance(from: prev, to: station2)
+            return dist1 < dist2
         }
-        let remaining = lineStations.filter { !allRouteNames.contains($0.name) }
-            .sorted { $0.name < $1.name }
-        ordered.append(contentsOf: remaining)
+    }
 
-        return ordered
+    /// Calculate rough distance between two stations
+    private func distance(from s1: Station, to s2: Station) -> Double {
+        let latDiff = s1.latitude - s2.latitude
+        let lonDiff = s1.longitude - s2.longitude
+        return latDiff * latDiff + lonDiff * lonDiff
     }
 
     /// Route data for branching display
@@ -114,14 +116,7 @@ struct LineDetailView: View {
 
     /// Get stations for a branch by name
     private func stationsForBranch(_ branch: LineRouteData.Branch) -> [Station] {
-        let stationsByName = Dictionary(grouping: lineStations) { $0.name }
-        var branchStations: [Station] = []
-        for stationName in branch.stations {
-            if let matches = stationsByName[stationName] {
-                branchStations.append(contentsOf: matches)
-            }
-        }
-        return branchStations
+        return stationsFromNames(branch.stations, excludeUsed: true)
     }
 
     /// The color for this subway line
@@ -188,15 +183,37 @@ struct LineDetailView: View {
         routeData.branches.contains { $0.branchPoint == station.name }
     }
 
-    /// Get stations from name list
-    private func stationsFromNames(_ names: [String]) -> [Station] {
+    /// Get stations from name list, using proximity to disambiguate duplicates
+    /// - Parameters:
+    ///   - names: List of station names in route order
+    ///   - excludeUsed: If true, each station can only be used once (for handling duplicate names like "7 Av")
+    private func stationsFromNames(_ names: [String], excludeUsed: Bool = false) -> [Station] {
         let stationsByName = Dictionary(grouping: lineStations) { $0.name }
         var result: [Station] = []
+        var usedStationIds: Set<UUID> = []
+
         for name in names {
-            if let matches = stationsByName[name] {
-                result.append(contentsOf: matches)
+            guard var candidates = stationsByName[name] else { continue }
+
+            // Filter out already-used stations if needed
+            if excludeUsed {
+                candidates = candidates.filter { !usedStationIds.contains($0.id) }
+            }
+
+            if let match = bestMatch(from: candidates, previousStation: result.last) {
+                result.append(match)
+                usedStationIds.insert(match.id)
             }
         }
+
+        // Add any stations not in route data (fallback)
+        if excludeUsed {
+            var allRouteNames = Set(names)
+            let remaining = lineStations.filter { !allRouteNames.contains($0.name) && !usedStationIds.contains($0.id) }
+                .sorted { $0.name < $1.name }
+            result.append(contentsOf: remaining)
+        }
+
         return result
     }
 
@@ -249,7 +266,6 @@ struct LineDetailView: View {
         let stationsBeforeSplit = stationsFromNames(routeData.stationsBeforeBranch(branch))
         let mainContinuation = stationsFromNames(routeData.stationsAfterBranch(branch))
         let branchStations = stationsForBranch(branch)
-        let totalMainStations = stationsBeforeSplit.count + mainContinuation.count
 
         // Group stations before split by borough
         let boroughGroupsBefore = stationsByBorough(stationsBeforeSplit)
@@ -488,14 +504,6 @@ struct LineStationRow: View {
             }
 
             Spacer()
-
-            if station.isVisited {
-                if let date = station.visitedDate {
-                    Text(date, style: .date)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
 
             Image(systemName: "chevron.right")
                 .font(.caption)

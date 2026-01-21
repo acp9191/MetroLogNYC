@@ -33,20 +33,10 @@ struct StationRowView: View {
                     }
                 }
 
-                // Borough and visited date
-                HStack {
-                    Text(station.borough.rawValue)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    if station.isVisited, let date = station.visitedDate {
-                        Text("•")
-                            .foregroundStyle(.secondary)
-                        Text(date, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                // Borough
+                Text(station.borough.rawValue)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()

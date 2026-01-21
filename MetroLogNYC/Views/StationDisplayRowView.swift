@@ -43,12 +43,6 @@ struct StationDisplayRowView: View {
                         Text("\(item.visitedCount)/\(item.stationCount) visited")
                             .font(.caption)
                             .foregroundStyle(.orange)
-                    } else if item.isVisited, let date = item.lastVisitedDate {
-                        Text("•")
-                            .foregroundStyle(.secondary)
-                        Text(date, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
             }

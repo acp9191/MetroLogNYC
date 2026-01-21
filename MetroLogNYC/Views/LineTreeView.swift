@@ -164,12 +164,6 @@ struct TreeStationRow: View {
 
             Spacer()
 
-            if station.isVisited, let date = station.visitedDate {
-                Text(date, style: .date)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundStyle(.tertiary)

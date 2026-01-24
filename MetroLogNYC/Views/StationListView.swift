@@ -85,7 +85,20 @@ struct StationListView: View {
         return Double(visitedLocationCount) / Double(totalLocationCount)
     }
 
-    private let allLines = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E", "F", "G", "J", "L", "M", "N", "Q", "R", "W", "Z", "GS", "FS", "RS", "SIR"]
+    // Lines ordered by trunk line (MTA standard grouping)
+    private let allLines = [
+        "1", "2", "3",           // Broadway-7th Ave (red)
+        "4", "5", "6",           // Lexington Ave (green)
+        "7",                     // Flushing (purple)
+        "A", "C", "E",           // 8th Ave (blue)
+        "B", "D", "F", "M",      // 6th Ave (orange)
+        "G",                     // Crosstown (lime)
+        "J", "Z",                // Nassau St (brown)
+        "L",                     // Canarsie (gray)
+        "N", "Q", "R", "W",      // Broadway (yellow)
+        "GS", "FS", "RS",        // Shuttles
+        "SIR"                    // Staten Island
+    ]
 
     var body: some View {
         NavigationStack {
@@ -133,8 +146,8 @@ struct StationListView: View {
                 }
                 .listStyle(.plain)
             }
-            .navigationTitle("Stations")
-            .searchable(text: $searchText, prompt: "Search stations, lines, or boroughs")
+            .navigationTitle("Stops")
+            .searchable(text: $searchText, prompt: "Search stops, lines, or boroughs")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -206,6 +219,15 @@ struct ProgressHeader: View {
     let totalCount: Int
     let progress: Double
 
+    /// Shows at least 1% if any progress has been made
+    private var progressPercent: Int {
+        let percent = Int(progress * 100)
+        if visitedCount > 0 && percent == 0 {
+            return 1
+        }
+        return percent
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -219,7 +241,7 @@ struct ProgressHeader: View {
 
                 Spacer()
 
-                Text("\(Int(progress * 100))%")
+                Text("\(progressPercent)%")
                     .font(.title2.bold())
                     .foregroundStyle(.blue)
             }

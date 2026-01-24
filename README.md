@@ -2,6 +2,8 @@
 
 An iOS app to track your NYC subway station visits.
 
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/metrolog-nyc/id6757987752)
+
 ## Features
 
 - Track visited stations across all 470+ NYC subway stations

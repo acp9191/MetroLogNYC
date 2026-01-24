@@ -17,7 +17,7 @@ struct ContentView: View {
 
             StationListView()
                 .tabItem {
-                    Label("Stations", systemImage: "list.bullet")
+                    Label("Stops", systemImage: "list.bullet")
                 }
                 .tag(1)
 

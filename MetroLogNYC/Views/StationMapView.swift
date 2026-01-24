@@ -41,7 +41,20 @@ struct StationMapView: View {
     }
 
     // All lines for the filter
-    private let allLines = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E", "F", "G", "J", "L", "M", "N", "Q", "R", "W", "Z", "GS", "FS", "RS", "SIR"]
+    // Lines ordered by trunk line (MTA standard grouping)
+    private let allLines = [
+        "1", "2", "3",           // Broadway-7th Ave (red)
+        "4", "5", "6",           // Lexington Ave (green)
+        "7",                     // Flushing (purple)
+        "A", "C", "E",           // 8th Ave (blue)
+        "B", "D", "F", "M",      // 6th Ave (orange)
+        "G",                     // Crosstown (lime)
+        "J", "Z",                // Nassau St (brown)
+        "L",                     // Canarsie (gray)
+        "N", "Q", "R", "W",      // Broadway (yellow)
+        "GS", "FS", "RS",        // Shuttles
+        "SIR"                    // Staten Island
+    ]
 
     /// Shapes to display based on current filter
     private var filteredShapes: [SubwayLineShape] {
@@ -55,7 +68,7 @@ struct StationMapView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Map(position: $cameraPosition, selection: $selectedStation) {
+                Map(position: $cameraPosition) {
                     // Route lines (rendered first, underneath stations)
                     if showRouteLines && shapesLoaded {
                         ForEach(filteredShapes, id: \.lineId) { lineShape in
@@ -76,7 +89,7 @@ struct StationMapView: View {
                             coordinate: station.coordinate,
                             anchor: .center
                         ) {
-                            SubwayStationMarker(
+                            StationMarker(
                                 station: station,
                                 isSelected: selectedStation?.id == station.id,
                                 highlightLine: lineFilter
@@ -85,7 +98,6 @@ struct StationMapView: View {
                                 selectedStation = station
                             }
                         }
-                        .tag(station)
                     }
 
                     if showUserLocation {
@@ -215,7 +227,13 @@ struct StationMapView: View {
                 selectedStation = nil
             } content: {
                 if let station = selectedStation {
-                    StationDetailView(station: station)
+                    // Show complex if station is part of one, otherwise show as standalone
+                    let item = if let complex = station.complex {
+                        StationDisplayItem(complex: complex)
+                    } else {
+                        StationDisplayItem(station: station)
+                    }
+                    ComplexDetailView(item: item)
                         .presentationDetents([.medium, .large])
                 }
             }
@@ -229,8 +247,8 @@ struct StationMapView: View {
     }
 }
 
-// MARK: - Subway Station Marker (Lightweight)
-struct SubwayStationMarker: View {
+// MARK: - Station Marker
+struct StationMarker: View {
     let station: Station
     var isSelected: Bool = false
     var highlightLine: String? = nil

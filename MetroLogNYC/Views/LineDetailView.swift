@@ -5,7 +5,8 @@ import SwiftData
 struct LineDetailView: View {
     let line: String
     @Query private var stations: [Station]
-    @State private var selectedStation: Station?
+    @Query private var complexes: [StationComplex]
+    @State private var selectedItem: StationDisplayItem?
 
     private var lineStations: [Station] {
         stations.filter { $0.lines.contains(line) }
@@ -208,7 +209,7 @@ struct LineDetailView: View {
 
         // Add any stations not in route data (fallback)
         if excludeUsed {
-            var allRouteNames = Set(names)
+            let allRouteNames = Set(names)
             let remaining = lineStations.filter { !allRouteNames.contains($0.name) && !usedStationIds.contains($0.id) }
                 .sorted { $0.name < $1.name }
             result.append(contentsOf: remaining)
@@ -355,20 +356,16 @@ struct LineDetailView: View {
             isBranch: isBranch,
             lineColor: lineColor,
             showMainLineContinuation: showMainLineContinuation,
-            onTap: { selectedStation = station }
+            onTap: {
+                // Navigate to complex if station is part of one, otherwise create virtual complex
+                if let complex = station.complex {
+                    selectedItem = StationDisplayItem(complex: complex)
+                } else {
+                    selectedItem = StationDisplayItem(station: station)
+                }
+            }
         )
         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-        .swipeActions(edge: .leading) {
-            Button {
-                station.toggleVisited()
-            } label: {
-                Label(
-                    station.isVisited ? "Unvisit" : "Visit",
-                    systemImage: station.isVisited ? "xmark.circle" : "checkmark.circle"
-                )
-            }
-            .tint(station.isVisited ? .orange : .blue)
-        }
     }
 
     var body: some View {
@@ -401,8 +398,8 @@ struct LineDetailView: View {
                 }
             }
         }
-        .sheet(item: $selectedStation) { station in
-            StationDetailView(station: station)
+        .sheet(item: $selectedItem) { item in
+            ComplexDetailView(item: item)
         }
     }
 }
@@ -419,6 +416,15 @@ struct LineProgressHeader: View {
         SubwayLine.from(line)?.color ?? .gray
     }
 
+    /// Shows at least 1% if any progress has been made
+    private var progressPercent: Int {
+        let percent = Int(progress * 100)
+        if visitedCount > 0 && percent == 0 {
+            return 1
+        }
+        return percent
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 16) {
@@ -431,7 +437,7 @@ struct LineProgressHeader: View {
                         .font(.headline)
                         .foregroundStyle(.primary)
 
-                    Text("\(visitedCount) of \(totalCount) stations")
+                    Text("\(visitedCount) of \(totalCount) stops")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
@@ -452,7 +458,7 @@ struct LineProgressHeader: View {
                 Spacer()
 
                 // Percentage
-                Text("\(Int(progress * 100))%")
+                Text("\(progressPercent)%")
                     .font(.title2.bold())
                     .foregroundStyle(lineColor)
             }
@@ -462,54 +468,6 @@ struct LineProgressHeader: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
         .padding(.vertical, 8)
-    }
-}
-
-// MARK: - Line Station Row
-struct LineStationRow: View {
-    @Bindable var station: Station
-    let currentLine: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // Visited indicator
-            Image(systemName: station.isVisited ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(station.isVisited ? .blue : .gray.opacity(0.5))
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        station.toggleVisited()
-                    }
-                }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(station.name)
-                    .font(.body)
-                    .foregroundStyle(station.isVisited ? .primary : .primary)
-
-                // Show other lines at this station (excluding current line)
-                let otherLines = station.lines.filter { $0 != currentLine }
-                if !otherLines.isEmpty {
-                    HStack(spacing: 3) {
-                        ForEach(otherLines.prefix(6), id: \.self) { line in
-                            LineBadge(line: line, size: 18)
-                        }
-                        if otherLines.count > 6 {
-                            Text("+\(otherLines.count - 6)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        }
-        .padding(.vertical, 4)
     }
 }
 

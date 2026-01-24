@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 /// A unified display item that represents either a station complex or a standalone station
 /// This provides a consistent interface for the list view regardless of whether
@@ -70,6 +71,19 @@ struct StationDisplayItem: Identifiable, Hashable {
     /// Most recent visit date among all stations
     var lastVisitedDate: Date? {
         stations.compactMap { $0.visitedDate }.max()
+    }
+
+    /// Center coordinate for displaying on map (average of all station coordinates)
+    var centerCoordinate: CLLocationCoordinate2D {
+        guard !stations.isEmpty else {
+            return CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
+        }
+        let totalLat = stations.reduce(0.0) { $0 + $1.latitude }
+        let totalLon = stations.reduce(0.0) { $0 + $1.longitude }
+        return CLLocationCoordinate2D(
+            latitude: totalLat / Double(stations.count),
+            longitude: totalLon / Double(stations.count)
+        )
     }
 
     // MARK: - Actions

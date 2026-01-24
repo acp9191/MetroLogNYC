@@ -4,15 +4,25 @@ import SwiftData
 /// Home view displaying overall progress and line cards
 struct HomeView: View {
     @Query private var stations: [Station]
+    @Query private var complexes: [StationComplex]
     @State private var selectedLine: String?
 
+    /// All locations (complexes + standalone stations as virtual complexes)
+    private var displayItems: [StationDisplayItem] {
+        StationDisplayItem.createDisplayItems(stations: stations, complexes: complexes)
+    }
+
     private var visitedCount: Int {
-        stations.filter { $0.isVisited }.count
+        displayItems.filter { $0.isVisited }.count
+    }
+
+    private var totalCount: Int {
+        displayItems.count
     }
 
     private var progress: Double {
-        guard !stations.isEmpty else { return 0 }
-        return Double(visitedCount) / Double(stations.count)
+        guard totalCount > 0 else { return 0 }
+        return Double(visitedCount) / Double(totalCount)
     }
 
     // All subway lines grouped by color/family
@@ -30,8 +40,20 @@ struct HomeView: View {
         ("Staten Island", ["SIR"])
     ]
 
-    // Flat list of all lines for the grid
-    private let allLines = ["1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E", "F", "G", "J", "L", "M", "N", "Q", "R", "W", "Z", "GS", "FS", "RS", "SIR"]
+    // Lines ordered by trunk line (MTA standard grouping)
+    private let allLines = [
+        "1", "2", "3",           // Broadway-7th Ave (red)
+        "4", "5", "6",           // Lexington Ave (green)
+        "7",                     // Flushing (purple)
+        "A", "C", "E",           // 8th Ave (blue)
+        "B", "D", "F", "M",      // 6th Ave (orange)
+        "G",                     // Crosstown (lime)
+        "J", "Z",                // Nassau St (brown)
+        "L",                     // Canarsie (gray)
+        "N", "Q", "R", "W",      // Broadway (yellow)
+        "GS", "FS", "RS",        // Shuttles
+        "SIR"                    // Staten Island
+    ]
 
     var body: some View {
         NavigationStack {
@@ -48,7 +70,7 @@ struct HomeView: View {
                     // Hero Progress Section
                     ProgressHeroView(
                         visitedCount: visitedCount,
-                        totalCount: stations.count,
+                        totalCount: totalCount,
                         progress: progress
                     )
                     .padding(.horizontal)
@@ -67,7 +89,7 @@ struct HomeView: View {
                         ], spacing: 12) {
                             ForEach(allLines, id: \.self) { line in
                                 NavigationLink(destination: LineDetailView(line: line)) {
-                                    LineCard(line: line, stations: stations)
+                                    LineCard(line: line, displayItems: displayItems)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -83,7 +105,7 @@ struct HomeView: View {
 
                         VStack(spacing: 12) {
                             ForEach(Borough.allCases) { borough in
-                                BoroughCard(borough: borough, stations: stations)
+                                BoroughCard(borough: borough, displayItems: displayItems)
                             }
                         }
                         .padding(.horizontal)
@@ -103,6 +125,15 @@ struct ProgressHeroView: View {
     let visitedCount: Int
     let totalCount: Int
     let progress: Double
+
+    /// Shows at least 1% if any progress has been made
+    private var progressPercent: Int {
+        let percent = Int(progress * 100)
+        if visitedCount > 0 && percent == 0 {
+            return 1
+        }
+        return percent
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -127,7 +158,7 @@ struct ProgressHeroView: View {
                 VStack(spacing: 4) {
                     Text("\(visitedCount)")
                         .font(.system(size: 44, weight: .bold, design: .rounded))
-                    Text("of \(totalCount) stations")
+                    Text("of \(totalCount) stops")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -135,7 +166,7 @@ struct ProgressHeroView: View {
             .frame(width: 180, height: 180)
 
             // Percentage badge
-            Text("\(Int(progress * 100))% Complete")
+            Text("\(progressPercent)% Complete")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .padding(.horizontal, 20)
@@ -159,26 +190,26 @@ struct ProgressHeroView: View {
 // MARK: - Line Card
 struct LineCard: View {
     let line: String
-    let stations: [Station]
+    let displayItems: [StationDisplayItem]
 
-    private var lineStations: [Station] {
-        stations.filter { $0.lines.contains(line) }
+    private var lineItems: [StationDisplayItem] {
+        displayItems.filter { $0.lines.contains(line) }
     }
 
     private var visitedCount: Int {
-        lineStations.filter { $0.isVisited }.count
+        lineItems.filter { $0.isVisited }.count
     }
 
     private var progress: Double {
-        guard !lineStations.isEmpty else { return 0 }
-        return Double(visitedCount) / Double(lineStations.count)
+        guard !lineItems.isEmpty else { return 0 }
+        return Double(visitedCount) / Double(lineItems.count)
     }
 
     var body: some View {
         VStack(spacing: 8) {
             LineBadge(line: line, size: 44)
 
-            Text("\(visitedCount)/\(lineStations.count)")
+            Text("\(visitedCount)/\(lineItems.count)")
                 .font(.caption.bold())
                 .foregroundStyle(.secondary)
 
@@ -204,19 +235,19 @@ struct LineCard: View {
 // MARK: - Borough Card
 struct BoroughCard: View {
     let borough: Borough
-    let stations: [Station]
+    let displayItems: [StationDisplayItem]
 
-    private var boroughStations: [Station] {
-        stations.filter { $0.borough == borough }
+    private var boroughItems: [StationDisplayItem] {
+        displayItems.filter { $0.borough == borough }
     }
 
     private var visitedCount: Int {
-        boroughStations.filter { $0.isVisited }.count
+        boroughItems.filter { $0.isVisited }.count
     }
 
     private var progress: Double {
-        guard !boroughStations.isEmpty else { return 0 }
-        return Double(visitedCount) / Double(boroughStations.count)
+        guard !boroughItems.isEmpty else { return 0 }
+        return Double(visitedCount) / Double(boroughItems.count)
     }
 
     private var icon: String {
@@ -241,7 +272,7 @@ struct BoroughCard: View {
                     Text(borough.rawValue)
                         .font(.headline)
                     Spacer()
-                    Text("\(visitedCount)/\(boroughStations.count)")
+                    Text("\(visitedCount)/\(boroughItems.count)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

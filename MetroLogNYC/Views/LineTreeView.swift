@@ -11,7 +11,7 @@ enum StationPosition {
 
 /// A row in the tree view showing a station with connecting lines
 struct TreeStationRow: View {
-    @Bindable var station: Station
+    let station: Station
     let currentLine: String
     let position: StationPosition
     let isBranch: Bool
@@ -22,6 +22,23 @@ struct TreeStationRow: View {
     private let lineWidth: CGFloat = 4
     private let nodeSize: CGFloat = 12
     private let treeWidth: CGFloat = 40
+
+    // Lines ordered by trunk line (MTA standard grouping)
+    private static let lineOrder = [
+        "1", "2", "3", "4", "5", "6", "7",
+        "A", "C", "E", "B", "D", "F", "M",
+        "G", "J", "Z", "L",
+        "N", "Q", "R", "W",
+        "GS", "FS", "RS", "SIR"
+    ]
+
+    private func sortedByTrunk(_ lines: [String]) -> [String] {
+        lines.sorted { line1, line2 in
+            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
+            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
+            return index1 < index2
+        }
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -130,11 +147,6 @@ struct TreeStationRow: View {
                     .stroke(lineColor, lineWidth: 3)
             )
             .offset(x: xOffset)
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    station.toggleVisited()
-                }
-            }
     }
 
     // MARK: - Station Content
@@ -146,15 +158,16 @@ struct TreeStationRow: View {
                     .font(.body)
                     .foregroundStyle(.primary)
 
-                // Show other lines at this station
-                let otherLines = station.lines.filter { $0 != currentLine }
+                // Show connecting lines (from complex if part of one, otherwise just this station)
+                let allLines = station.complex?.allLines ?? station.lines
+                let otherLines = sortedByTrunk(allLines.filter { $0 != currentLine })
                 if !otherLines.isEmpty {
                     HStack(spacing: 3) {
-                        ForEach(otherLines.prefix(6), id: \.self) { line in
+                        ForEach(otherLines.prefix(8), id: \.self) { line in
                             LineBadge(line: line, size: 18)
                         }
-                        if otherLines.count > 6 {
-                            Text("+\(otherLines.count - 6)")
+                        if otherLines.count > 8 {
+                            Text("+\(otherLines.count - 8)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }

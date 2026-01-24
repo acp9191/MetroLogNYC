@@ -7,6 +7,29 @@ struct ComplexDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var cameraPosition: MapCameraPosition = .automatic
 
+    // Lines ordered by trunk line (MTA standard grouping)
+    private static let lineOrder = [
+        "1", "2", "3",           // Broadway-7th Ave (red)
+        "4", "5", "6",           // Lexington Ave (green)
+        "7",                     // Flushing (purple)
+        "A", "C", "E",           // 8th Ave (blue)
+        "B", "D", "F", "M",      // 6th Ave (orange)
+        "G",                     // Crosstown (lime)
+        "J", "Z",                // Nassau St (brown)
+        "L",                     // Canarsie (gray)
+        "N", "Q", "R", "W",      // Broadway (yellow)
+        "GS", "FS", "RS",        // Shuttles
+        "SIR"                    // Staten Island
+    ]
+
+    private var sortedLines: [String] {
+        item.lines.sorted { line1, line2 in
+            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
+            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
+            return index1 < index2
+        }
+    }
+
     private var centerCoordinate: CLLocationCoordinate2D {
         guard let first = item.stations.first else {
             return CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
@@ -70,8 +93,8 @@ struct ComplexDetailView: View {
             linesSection
             boroughSection
             visitStatusSection
-            if item.isComplex {
-                stationsInComplexSection
+            if item.stationCount > 1 {
+                entrancesSection
             }
             directionsButton
         }
@@ -87,7 +110,7 @@ struct ComplexDetailView: View {
                 .foregroundStyle(.secondary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 8) {
-                ForEach(item.lines.sorted(), id: \.self) { line in
+                ForEach(sortedLines, id: \.self) { line in
                     LineBadge(line: line, size: 36)
                 }
             }
@@ -125,16 +148,9 @@ struct ComplexDetailView: View {
                 visitButton
             }
 
-            if item.isComplex {
-                Text("\(item.visitedCount) of \(item.stationCount) stations visited")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
             if item.isVisited, let date = item.lastVisitedDate {
                 HStack {
-                    Text("Last visited on")
+                    Text("Visited on")
                     Text(date, style: .date)
                     Spacer()
                 }
@@ -149,24 +165,11 @@ struct ComplexDetailView: View {
 
     private var visitStatusLabel: some View {
         Label {
-            Text(item.isComplex ? "Mark Complex as Visited" : "Visited")
+            Text("Visited")
                 .font(.headline)
         } icon: {
-            visitStatusIcon
-        }
-    }
-
-    @ViewBuilder
-    private var visitStatusIcon: some View {
-        if item.isVisited {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.blue)
-        } else if item.isPartiallyVisited {
-            Image(systemName: "circle.lefthalf.filled")
-                .foregroundStyle(.orange)
-        } else {
-            Image(systemName: "circle")
-                .foregroundStyle(.gray)
+            Image(systemName: item.isVisited ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(item.isVisited ? .blue : .gray)
         }
     }
 
@@ -181,16 +184,16 @@ struct ComplexDetailView: View {
         .tint(item.isVisited ? .orange : .blue)
     }
 
-    // MARK: - Stations in Complex Section
+    // MARK: - Entrances Section
 
-    private var stationsInComplexSection: some View {
+    private var entrancesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Stations in Complex")
+            Text("Entrances")
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
             ForEach(item.stations) { station in
-                StationInComplexRow(station: station)
+                EntranceRow(station: station)
             }
         }
         .padding()
@@ -222,24 +225,35 @@ struct ComplexDetailView: View {
     }
 }
 
-// MARK: - Station In Complex Row
+// MARK: - Entrance Row
 
-struct StationInComplexRow: View {
-    @Bindable var station: Station
+struct EntranceRow: View {
+    let station: Station
+
+    // Lines ordered by trunk line (MTA standard grouping)
+    private static let lineOrder = [
+        "1", "2", "3", "4", "5", "6", "7",
+        "A", "C", "E", "B", "D", "F", "M",
+        "G", "J", "Z", "L",
+        "N", "Q", "R", "W",
+        "GS", "FS", "RS", "SIR"
+    ]
+
+    private var sortedLines: [String] {
+        station.lines.sorted { line1, line2 in
+            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
+            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
+            return index1 < index2
+        }
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: station.isVisited ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(station.isVisited ? .blue : .gray)
-                .onTapGesture {
-                    station.toggleVisited()
-                }
-
             VStack(alignment: .leading, spacing: 4) {
                 Text(station.name)
                     .font(.subheadline)
 
-                stationLines
+                entranceLines
             }
 
             Spacer()
@@ -247,9 +261,9 @@ struct StationInComplexRow: View {
         .padding(.vertical, 4)
     }
 
-    private var stationLines: some View {
+    private var entranceLines: some View {
         HStack(spacing: 4) {
-            ForEach(station.lines.prefix(6), id: \.self) { line in
+            ForEach(sortedLines.prefix(6), id: \.self) { line in
                 LineBadge(line: line, size: 16)
             }
         }

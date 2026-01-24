@@ -1,50 +1,57 @@
 import SwiftUI
 
-/// A row view that displays either a station complex or standalone station
+/// A row view that displays a subway stop
 struct StationDisplayRowView: View {
     let item: StationDisplayItem
     var onToggleVisited: (() -> Void)?
 
+    // Lines ordered by trunk line (MTA standard grouping)
+    private static let lineOrder = [
+        "1", "2", "3", "4", "5", "6", "7",
+        "A", "C", "E", "B", "D", "F", "M",
+        "G", "J", "Z", "L",
+        "N", "Q", "R", "W",
+        "GS", "FS", "RS", "SIR"
+    ]
+
+    private var sortedLines: [String] {
+        item.lines.sorted { line1, line2 in
+            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
+            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
+            return index1 < index2
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            // Visited indicator with partial state for complexes
+            // Visited indicator with partial state
             visitedIndicator
                 .onTapGesture {
                     onToggleVisited?()
                 }
 
             VStack(alignment: .leading, spacing: 4) {
-                // Station/Complex name
+                // Stop name
                 Text(item.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
 
                 // Subway lines
                 HStack(spacing: 4) {
-                    ForEach(item.lines.sorted().prefix(10), id: \.self) { line in
+                    ForEach(sortedLines.prefix(10), id: \.self) { line in
                         LineBadge(line: line, size: 20)
                     }
-                    if item.lines.count > 10 {
-                        Text("+\(item.lines.count - 10)")
+                    if sortedLines.count > 10 {
+                        Text("+\(sortedLines.count - 10)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
 
-                // Borough and visit info
-                HStack {
-                    Text(item.borough.rawValue)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    if item.isComplex && item.isPartiallyVisited {
-                        Text("•")
-                            .foregroundStyle(.secondary)
-                        Text("\(item.visitedCount)/\(item.stationCount) visited")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                }
+                // Borough
+                Text(item.borough.rawValue)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -64,16 +71,6 @@ struct StationDisplayRowView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.title2)
                 .foregroundStyle(.blue)
-        } else if item.isPartiallyVisited {
-            // Partial visit indicator for complexes
-            ZStack {
-                Circle()
-                    .stroke(Color.orange, lineWidth: 2)
-                    .frame(width: 24, height: 24)
-                Circle()
-                    .fill(Color.orange)
-                    .frame(width: 12, height: 12)
-            }
         } else {
             Image(systemName: "circle")
                 .font(.title2)

@@ -417,7 +417,7 @@ struct LineRouteData {
         "Court Sq",
         "Hunters Point Av",
         "Vernon Blvd-Jackson Av",
-        "Grand Central-42 St",
+        "Grand Central",
         "5 Av",
         "Times Sq-42 St",
         "34 St-Hudson Yards"

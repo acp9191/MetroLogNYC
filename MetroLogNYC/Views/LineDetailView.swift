@@ -207,14 +207,6 @@ struct LineDetailView: View {
             }
         }
 
-        // Add any stations not in route data (fallback)
-        if excludeUsed {
-            let allRouteNames = Set(names)
-            let remaining = lineStations.filter { !allRouteNames.contains($0.name) && !usedStationIds.contains($0.id) }
-                .sorted { $0.name < $1.name }
-            result.append(contentsOf: remaining)
-        }
-
         return result
     }
 

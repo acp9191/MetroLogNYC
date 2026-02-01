@@ -229,27 +229,19 @@ struct ProgressHeader: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text("\(visitedCount) of \(totalCount)")
-                        .font(.headline)
-                    Text("locations visited")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Text("\(progressPercent)%")
-                    .font(.title2.bold())
-                    .foregroundStyle(.blue)
-            }
+        HStack(spacing: 12) {
+            Text("\(visitedCount)/\(totalCount)")
+                .font(.subheadline.bold())
 
             ProgressView(value: progress)
                 .tint(.blue)
+
+            Text("\(progressPercent)%")
+                .font(.subheadline.bold())
+                .foregroundStyle(.blue)
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 10)
         .background(Color(.secondarySystemBackground))
     }
 }

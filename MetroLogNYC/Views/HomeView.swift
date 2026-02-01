@@ -156,7 +156,7 @@ struct ProgressHeroView: View {
                     .animation(.easeOut(duration: 0.5), value: progress)
 
                 VStack(spacing: 4) {
-                    Text("\(visitedCount)")
+                    AnimatedCounter(value: visitedCount)
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                     Text("of \(totalCount) stops")
                         .font(.subheadline)
@@ -293,6 +293,25 @@ struct BoroughCard: View {
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Animated Counter
+struct AnimatedCounter: View {
+    let value: Int
+
+    @State private var displayedValue: Int = 0
+
+    var body: some View {
+        Text("\(displayedValue)")
+            .contentTransition(.numericText(value: Double(displayedValue)))
+            .animation(.snappy(duration: 0.3), value: displayedValue)
+            .onChange(of: value) { oldValue, newValue in
+                displayedValue = newValue
+            }
+            .onAppear {
+                displayedValue = value
+            }
     }
 }
 

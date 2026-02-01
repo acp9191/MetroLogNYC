@@ -1,10 +1,12 @@
 import SwiftUI
+import SwiftData
 import MapKit
 
 /// Detail view for a station complex or standalone station
 struct ComplexDetailView: View {
     let item: StationDisplayItem
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var cameraPosition: MapCameraPosition = .automatic
 
     // Lines ordered by trunk line (MTA standard grouping)
@@ -176,6 +178,7 @@ struct ComplexDetailView: View {
     private var visitButton: some View {
         Button {
             item.toggleVisited()
+            try? modelContext.save()
         } label: {
             Text(item.isVisited ? "Unvisit" : "Visit")
                 .font(.subheadline.bold())

@@ -5,6 +5,7 @@ import MapKit
 /// Map view showing all subway stations with line colors
 struct StationMapView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var locationService: LocationService
     @Query private var stations: [Station]
 
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
@@ -15,7 +16,6 @@ struct StationMapView: View {
     @State private var showingDetail = false
     @State private var visitedFilter: StationFilter = .all
     @State private var lineFilter: String? = nil
-    @State private var showUserLocation = false
     @State private var showRouteLines = true
     @State private var shapesLoaded = false
 
@@ -100,7 +100,7 @@ struct StationMapView: View {
                         }
                     }
 
-                    if showUserLocation {
+                    if locationService.isLocationEnabled {
                         UserAnnotation()
                     }
                 }
@@ -188,10 +188,14 @@ struct StationMapView: View {
 
                         // Location button
                         Button {
-                            showUserLocation.toggle()
+                            if locationService.authorizationStatus == .notDetermined {
+                                locationService.requestAuthorization()
+                            }
+                            locationService.isLocationEnabled.toggle()
                         } label: {
-                            Image(systemName: showUserLocation ? "location.fill" : "location")
+                            Image(systemName: locationService.isLocationEnabled ? "location.fill" : "location")
                                 .font(.title2)
+                                .foregroundStyle(locationService.authorizationStatus == .denied ? .red : .primary)
                                 .padding(12)
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
@@ -214,10 +218,12 @@ struct StationMapView: View {
                         }
                     }
                     .padding()
+                    .padding(.bottom, 20)
                 }
             }
             .navigationTitle("Map")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .onChange(of: selectedStation) { oldValue, newValue in
                 if newValue != nil {
                     showingDetail = true
@@ -283,4 +289,5 @@ struct StationMarker: View {
 #Preview {
     StationMapView()
         .modelContainer(for: Station.self, inMemory: true)
+        .environmentObject(LocationService.shared)
 }

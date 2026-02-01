@@ -5,6 +5,7 @@ import SwiftData
 @main
 struct MetroLogNYCApp: App {
     let modelContainer: ModelContainer
+    @StateObject private var locationService = LocationService.shared
 
     init() {
         do {
@@ -26,7 +27,9 @@ struct MetroLogNYCApp: App {
             ContentView()
                 .onAppear {
                     seedDataIfNeeded()
+                    locationService.setModelContext(modelContainer.mainContext)
                 }
+                .environmentObject(locationService)
         }
         .modelContainer(modelContainer)
     }

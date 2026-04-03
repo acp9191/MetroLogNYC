@@ -1,0 +1,190 @@
+name: Release to TestFlight
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    env:
+      SCHEME: MetroLogNYC
+      PROJECT: MetroLogNYC.xcodeproj
+      ARCHIVE_PATH: build/MetroLogNYC.xcarchive
+      IPA_PATH: build/MetroLogNYC.ipa
+      EXPORT_OPTIONS_PATH: build/ExportOptions.plist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Parse version from commit
+        id: version
+        run: |
+          # Extract version from latest commit message (expects "vX.Y.Z" somewhere in message)
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          if [[ "$COMMIT_MSG" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+            echo "has_version=true" >> "$GITHUB_OUTPUT"
+            echo "Detected version: $VERSION"
+          else
+            echo "has_version=false" >> "$GITHUB_OUTPUT"
+            echo "No version found in commit message, skipping release."
+          fi
+
+      - name: Bump version in project
+        if: steps.version.outputs.has_version == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER=${{ github.run_number }}
+
+          # Update MARKETING_VERSION and CURRENT_PROJECT_VERSION in the project
+          sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/" "$PROJECT/project.pbxproj"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/" "$PROJECT/project.pbxproj"
+
+          echo "Set version to $VERSION ($BUILD_NUMBER)"
+
+      - name: Install Apple certificate and provisioning profile
+        if: steps.version.outputs.has_version == 'true'
+        env:
+          DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
+          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          echo -n "$DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security import "$CERT_PATH" \
+            -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          # Install provisioning profile
+          PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          # Extract UUID from profile and install with correct filename
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< \
+            $(security cms -D -i "$PROFILE_PATH"))
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/"$PROFILE_UUID".mobileprovision
+
+          echo "profile_uuid=$PROFILE_UUID" >> "$GITHUB_OUTPUT"
+
+      - name: Create export options plist
+        if: steps.version.outputs.has_version == 'true'
+        run: |
+          cat > "$EXPORT_OPTIONS_PATH" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>destination</key>
+              <string>upload</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.averypeterson.MetroLogNYC</key>
+                  <string>${{ secrets.PROVISIONING_PROFILE_NAME }}</string>
+              </dict>
+              <key>teamID</key>
+              <string>${{ secrets.TEAM_ID }}</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Build archive
+        if: steps.version.outputs.has_version == 'true'
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "generic/platform=iOS" \
+            -archivePath "$ARCHIVE_PATH" \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
+            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
+            | xcpretty
+
+      - name: Export IPA
+        if: steps.version.outputs.has_version == 'true'
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportOptionsPlist "$EXPORT_OPTIONS_PATH" \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            | xcpretty
+
+          # Move IPA to expected path
+          mv build/export/*.ipa "$IPA_PATH"
+
+      - name: Upload to TestFlight
+        if: steps.version.outputs.has_version == 'true'
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.ASC_API_KEY }}
+        run: |
+          # Write API key to file for xcrun
+          mkdir -p private_keys
+          echo -n "$APP_STORE_CONNECT_API_KEY" > "private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "${{ secrets.ASC_KEY_ID }}" \
+            --apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.has_version == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Create the git tag
+          git tag "$TAG"
+          git push origin "$TAG"
+
+          # Create GitHub Release with the IPA attached
+          gh release create "$TAG" "$IPA_PATH" \
+            --title "MetroLogNYC $VERSION" \
+            --generate-notes
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH"
+          fi
+          rm -f private_keys/AuthKey_*.p8

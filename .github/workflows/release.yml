@@ -135,10 +135,14 @@ jobs:
             -scheme "$SCHEME" \
             -destination "generic/platform=iOS" \
             -archivePath "$ARCHIVE_PATH" \
+            -jobs "$(sysctl -n hw.ncpu)" \
+            -quiet \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
-            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}"
+            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
+            DEBUG_INFORMATION_FORMAT=dwarf \
+            COMPILER_INDEX_STORE_ENABLE=NO
 
       - name: Export and upload to TestFlight
         if: steps.version.outputs.has_version == 'true'

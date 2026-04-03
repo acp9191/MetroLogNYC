@@ -19,7 +19,6 @@ jobs:
       SCHEME: MetroLogNYC
       PROJECT: MetroLogNYC.xcodeproj
       ARCHIVE_PATH: build/MetroLogNYC.xcarchive
-      IPA_PATH: build/MetroLogNYC.ipa
       EXPORT_OPTIONS_PATH: build/ExportOptions.plist
 
     steps:
@@ -119,7 +118,7 @@ jobs:
           mkdir -p build
           plutil -create xml1 "$EXPORT_OPTIONS_PATH"
           plutil -insert method -string "app-store-connect" "$EXPORT_OPTIONS_PATH"
-          plutil -insert destination -string "export" "$EXPORT_OPTIONS_PATH"
+          plutil -insert destination -string "upload" "$EXPORT_OPTIONS_PATH"
           plutil -insert signingStyle -string "manual" "$EXPORT_OPTIONS_PATH"
           plutil -insert provisioningProfiles -dictionary "$EXPORT_OPTIONS_PATH"
           plutil -insert provisioningProfiles.com\\.averypeterson\\.MetroLogNYC \
@@ -140,30 +139,20 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
             DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}"
 
-      - name: Export IPA
+      - name: Export and upload to TestFlight
         if: steps.version.outputs.has_version == 'true'
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.ASC_API_KEY }}
         run: |
+          API_KEY_PATH=$RUNNER_TEMP/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          echo -n "$APP_STORE_CONNECT_API_KEY" > "$API_KEY_PATH"
+
           xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportOptionsPlist "$EXPORT_OPTIONS_PATH" \
-            -exportPath build/export
-
-          mv build/export/*.ipa "$IPA_PATH"
-
-      - name: Upload to TestFlight
-        if: steps.version.outputs.has_version == 'true'
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.ASC_API_KEY }}
-        run: |
-          mkdir -p private_keys
-          echo -n "$APP_STORE_CONNECT_API_KEY" > "private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8"
-
-          xcrun iTMSTransporter -m upload \
-            -assetFile "$IPA_PATH" \
-            -apiKey "${{ secrets.ASC_KEY_ID }}" \
-            -apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}"
 
       - name: Create GitHub Release
         if: steps.version.outputs.has_version == 'true'
@@ -179,4 +168,4 @@ jobs:
           if [ -f "$KEYCHAIN_PATH" ]; then
             security delete-keychain "$KEYCHAIN_PATH"
           fi
-          rm -f private_keys/AuthKey_*.p8
+          rm -f $RUNNER_TEMP/AuthKey_*.p8

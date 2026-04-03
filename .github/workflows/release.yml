@@ -138,7 +138,6 @@ jobs:
       - name: Build archive
         if: steps.version.outputs.has_version == 'true'
         run: |
-          set -o pipefail
           xcodebuild archive \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -148,25 +147,16 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
-            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
-            2>&1 | tee build/archive.log | xcpretty
-
-          if [ ! -d "$ARCHIVE_PATH" ]; then
-            echo "::error::Archive failed. Full log:"
-            cat build/archive.log
-            exit 1
-          fi
+            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}"
 
       - name: Export IPA
         if: steps.version.outputs.has_version == 'true'
         run: |
-          set -o pipefail
           xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportOptionsPlist "$EXPORT_OPTIONS_PATH" \
             -exportPath build/export \
-            -allowProvisioningUpdates \
-            2>&1 | tee build/export.log | xcpretty
+            -allowProvisioningUpdates
 
           mv build/export/*.ipa "$IPA_PATH"
 

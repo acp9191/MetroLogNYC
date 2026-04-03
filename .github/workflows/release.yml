@@ -12,6 +12,10 @@ jobs:
   build-and-release:
     runs-on: macos-15
     timeout-minutes: 30
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     env:
       SCHEME: MetroLogNYC
@@ -23,24 +27,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install semantic-release
+        run: npm install -g semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
 
-      - name: Parse version from commit
+      - name: Determine next version
         id: version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Extract version from latest commit message (expects "vX.Y.Z" somewhere in message)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
-          if [[ "$COMMIT_MSG" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            VERSION="${BASH_REMATCH[1]}"
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          # Dry run to get the next version without publishing
+          OUTPUT=$(npx semantic-release --dry-run --no-ci 2>&1) || true
+          echo "$OUTPUT"
+
+          # Extract the next version from dry run output
+          NEXT_VERSION=$(echo "$OUTPUT" | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+' || true)
+
+          if [ -n "$NEXT_VERSION" ]; then
+            echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
             echo "has_version=true" >> "$GITHUB_OUTPUT"
-            echo "Detected version: $VERSION"
+            echo "Next version: $NEXT_VERSION"
           else
             echo "has_version=false" >> "$GITHUB_OUTPUT"
-            echo "No version found in commit message, skipping release."
+            echo "No release needed."
           fi
 
       - name: Bump version in project
@@ -49,7 +69,6 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BUILD_NUMBER=${{ github.run_number }}
 
-          # Update MARKETING_VERSION and CURRENT_PROJECT_VERSION in the project
           sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/" "$PROJECT/project.pbxproj"
           sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/" "$PROJECT/project.pbxproj"
 
@@ -86,12 +105,9 @@ jobs:
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          # Extract UUID from profile and install with correct filename
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< \
             $(security cms -D -i "$PROFILE_PATH"))
           cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/"$PROFILE_UUID".mobileprovision
-
-          echo "profile_uuid=$PROFILE_UUID" >> "$GITHUB_OUTPUT"
 
       - name: Create export options plist
         if: steps.version.outputs.has_version == 'true'
@@ -135,7 +151,6 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
             2>&1 | tee build/archive.log | xcpretty
 
-          # Fail loudly if archive doesn't exist
           if [ ! -d "$ARCHIVE_PATH" ]; then
             echo "::error::Archive failed. Full log:"
             cat build/archive.log
@@ -153,7 +168,6 @@ jobs:
             -allowProvisioningUpdates \
             2>&1 | tee build/export.log | xcpretty
 
-          # Move IPA to expected path
           mv build/export/*.ipa "$IPA_PATH"
 
       - name: Upload to TestFlight
@@ -163,7 +177,6 @@ jobs:
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY: ${{ secrets.ASC_API_KEY }}
         run: |
-          # Write API key to file for xcrun
           mkdir -p private_keys
           echo -n "$APP_STORE_CONNECT_API_KEY" > "private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8"
 
@@ -176,19 +189,9 @@ jobs:
       - name: Create GitHub Release
         if: steps.version.outputs.has_version == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Create the git tag
-          git tag "$TAG"
-          git push origin "$TAG"
-
-          # Create GitHub Release with the IPA attached
-          gh release create "$TAG" "$IPA_PATH" \
-            --title "MetroLogNYC $VERSION" \
-            --generate-notes
+          npx semantic-release
 
       - name: Clean up keychain
         if: always()

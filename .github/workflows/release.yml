@@ -117,30 +117,14 @@ jobs:
         if: steps.version.outputs.has_version == 'true'
         run: |
           mkdir -p build
-          cat > "$EXPORT_OPTIONS_PATH" <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store-connect</string>
-    <key>destination</key>
-    <string>export</string>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.averypeterson.MetroLogNYC</key>
-        <string></string>
-    </dict>
-    <key>teamID</key>
-    <string></string>
-</dict>
-</plist>
-PLIST
-          plutil -replace provisioningProfiles.com\\.averypeterson\\.MetroLogNYC \
+          plutil -create xml1 "$EXPORT_OPTIONS_PATH"
+          plutil -insert method -string "app-store-connect" "$EXPORT_OPTIONS_PATH"
+          plutil -insert destination -string "export" "$EXPORT_OPTIONS_PATH"
+          plutil -insert signingStyle -string "manual" "$EXPORT_OPTIONS_PATH"
+          plutil -insert provisioningProfiles -dictionary "$EXPORT_OPTIONS_PATH"
+          plutil -insert provisioningProfiles.com\\.averypeterson\\.MetroLogNYC \
             -string "${{ secrets.PROVISIONING_PROFILE_NAME }}" "$EXPORT_OPTIONS_PATH"
-          plutil -replace teamID \
+          plutil -insert teamID \
             -string "${{ secrets.TEAM_ID }}" "$EXPORT_OPTIONS_PATH"
 
       - name: Build archive

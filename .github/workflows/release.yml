@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   build-and-release:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 20
     permissions:
       contents: write
@@ -39,7 +39,7 @@ jobs:
         run: npm install -g semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
 
       - name: Determine next version
         id: version

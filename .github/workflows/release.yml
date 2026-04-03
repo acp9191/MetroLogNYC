@@ -97,7 +97,7 @@ jobs:
         if: steps.version.outputs.has_version == 'true'
         run: |
           mkdir -p build
-          cat > "$EXPORT_OPTIONS_PATH" << 'PLIST'
+          cat > "$EXPORT_OPTIONS_PATH" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -117,11 +117,12 @@ jobs:
               <string>${{ secrets.TEAM_ID }}</string>
           </dict>
           </plist>
-          PLIST
+          EOF
 
       - name: Build archive
         if: steps.version.outputs.has_version == 'true'
         run: |
+          set -o pipefail
           xcodebuild archive \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -132,17 +133,25 @@ jobs:
             CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
             DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
-            | xcpretty
+            2>&1 | tee build/archive.log | xcpretty
+
+          # Fail loudly if archive doesn't exist
+          if [ ! -d "$ARCHIVE_PATH" ]; then
+            echo "::error::Archive failed. Full log:"
+            cat build/archive.log
+            exit 1
+          fi
 
       - name: Export IPA
         if: steps.version.outputs.has_version == 'true'
         run: |
+          set -o pipefail
           xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportOptionsPlist "$EXPORT_OPTIONS_PATH" \
             -exportPath build/export \
             -allowProvisioningUpdates \
-            | xcpretty
+            2>&1 | tee build/export.log | xcpretty
 
           # Move IPA to expected path
           mv build/export/*.ipa "$IPA_PATH"

@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Install semantic-release
         run: npm install -g semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog
@@ -99,6 +99,10 @@ jobs:
             -k "$KEYCHAIN_PATH"
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          # Debug: list imported certificates
+          echo "Certificates in keychain:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
           # Install provisioning profile
           PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision

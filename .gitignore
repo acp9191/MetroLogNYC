@@ -19,5 +19,8 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 
+# Node
+node_modules/
+
 # Code Injection
 iOSInjectionProject/

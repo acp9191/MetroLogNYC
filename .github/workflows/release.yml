@@ -1,16 +1,16 @@
 name: Release to TestFlight
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: true
 
 jobs:
   build-and-release:
     runs-on: macos-26
+    environment: release
     timeout-minutes: 20
     permissions:
       contents: write

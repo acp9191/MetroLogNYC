@@ -58,6 +58,10 @@ struct StationDisplayRowView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.title2)
                 .foregroundStyle(.blue)
+        } else if item.isPartiallyVisited {
+            Image(systemName: "checkmark.circle")
+                .font(.title2)
+                .foregroundStyle(.orange)
         } else {
             Image(systemName: "circle")
                 .font(.title2)

@@ -14,8 +14,7 @@ struct LineDetailView: View {
 
     /// Stations sorted by route order
     private var orderedStations: [Station] {
-        let route = LineRouteData.route(for: line)
-        return stationsFromNames(route.mainLine, excludeUsed: true)
+        stationsFromNames(routeData.mainLine, excludeUsed: true)
     }
 
     /// Get the best matching station from duplicates based on proximity to previous station

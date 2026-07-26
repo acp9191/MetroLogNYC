@@ -16,13 +16,6 @@ struct ComplexDetailView: View {
         SubwayLine.sortedByDisplayOrder(item.lines)
     }
 
-    private var centerCoordinate: CLLocationCoordinate2D {
-        guard let first = item.stations.first else {
-            return CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
-        }
-        return first.coordinate
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -54,7 +47,7 @@ struct ComplexDetailView: View {
         }
         .onAppear {
             cameraPosition = .region(MKCoordinateRegion(
-                center: centerCoordinate,
+                center: item.centerCoordinate,
                 span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
             ))
         }
@@ -207,7 +200,7 @@ struct ComplexDetailView: View {
     }
 
     private func openInMaps() {
-        let placemark = MKPlacemark(coordinate: centerCoordinate)
+        let placemark = MKPlacemark(coordinate: item.centerCoordinate)
         let mapItem = MKMapItem(placemark: placemark)
         mapItem.name = item.name
         mapItem.openInMaps(launchOptions: [

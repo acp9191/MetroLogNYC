@@ -47,18 +47,4 @@ final class StationComplex {
         allLines.joined(separator: " ")
     }
 
-    /// Whether all stations in the complex have been visited
-    var isFullyVisited: Bool {
-        !stations.isEmpty && stations.allSatisfy { $0.isVisited }
-    }
-
-    /// Whether any station in the complex has been visited
-    var isPartiallyVisited: Bool {
-        stations.contains { $0.isVisited }
-    }
-
-    /// Number of visited stations in this complex
-    var visitedStationCount: Int {
-        stations.filter { $0.isVisited }.count
-    }
 }

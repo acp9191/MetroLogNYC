@@ -21,24 +21,10 @@ struct StationMapView: View {
     @State private var visibleRegion: MKCoordinateRegion?
 
     private var filteredStations: [Station] {
-        var result = stations
-
-        // Line filter
-        if let line = lineFilter {
-            result = result.filter { $0.lines.contains(line) }
+        stations.filter { station in
+            (lineFilter == nil || station.lines.contains(lineFilter!))
+            && (visitedFilter == .all || (visitedFilter == .visited) == station.isVisited)
         }
-
-        // Visited filter
-        switch visitedFilter {
-        case .all:
-            break
-        case .visited:
-            result = result.filter { $0.isVisited }
-        case .unvisited:
-            result = result.filter { !$0.isVisited }
-        }
-
-        return result
     }
 
     /// Stations to actually render as annotations.

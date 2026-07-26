@@ -16,6 +16,7 @@ struct TreeStationRow: View {
     let position: StationPosition
     let isBranch: Bool
     let lineColor: Color
+    let connectingLines: [String]
     var showMainLineContinuation: Bool = false  // Shows main line on left while branch is on right
     var onTap: () -> Void
 
@@ -145,9 +146,8 @@ struct TreeStationRow: View {
                     .font(.body)
                     .foregroundStyle(.primary)
 
-                // Show connecting lines (from complex if part of one, otherwise just this station)
-                let allLines = station.complex?.allLines ?? station.lines
-                let otherLines = sortedByTrunk(allLines.filter { $0 != currentLine })
+                // Show connecting lines (excluding the current line)
+                let otherLines = sortedByTrunk(connectingLines.filter { $0 != currentLine })
                 if !otherLines.isEmpty {
                     HStack(spacing: 3) {
                         ForEach(otherLines.prefix(8), id: \.self) { line in
@@ -250,6 +250,7 @@ struct BranchHeader: View {
             position: .middle,
             isBranch: false,
             lineColor: .green,
+            connectingLines: station.lines,
             onTap: {}
         )
     }

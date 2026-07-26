@@ -328,6 +328,7 @@ struct LineDetailView: View {
             position: position,
             isBranch: isBranch,
             lineColor: lineColor,
+            connectingLines: station.complex?.allLines ?? station.lines,
             showMainLineContinuation: showMainLineContinuation,
             onTap: {
                 // Navigate to complex if station is part of one, otherwise create virtual complex

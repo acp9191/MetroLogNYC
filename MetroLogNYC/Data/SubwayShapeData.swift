@@ -21,6 +21,7 @@ class SubwayShapeService {
     static let shared = SubwayShapeService()
 
     private var lineShapes: [String: SubwayLineShape] = [:]
+    private var cachedAllShapes: [SubwayLineShape] = []
     private(set) var isLoaded = false
     private var loadTask: Task<Void, Never>?
 
@@ -43,6 +44,7 @@ class SubwayShapeService {
         }.value
 
         self.lineShapes = shapes
+        self.cachedAllShapes = Array(shapes.values)
         self.isLoaded = true
     }
 
@@ -84,7 +86,7 @@ class SubwayShapeService {
 
     /// Get all line shapes (returns empty if not loaded yet)
     func allShapes() -> [SubwayLineShape] {
-        return Array(lineShapes.values)
+        return cachedAllShapes
     }
 
     /// Get shape data for a specific line

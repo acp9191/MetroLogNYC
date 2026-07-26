@@ -16,8 +16,10 @@ struct MetroLogNYCApp: App {
             fatalError("Failed to create ModelContainer: \(error)")
         }
 
-        // Preload subway shapes in background for faster map loading
+        // Preload subway shapes and seed station data in background at startup
+        let context = modelContainer.mainContext
         Task { @MainActor in
+            StationData.seedIfNeeded(modelContext: context)
             SubwayShapeService.shared.preload()
         }
     }
@@ -26,16 +28,10 @@ struct MetroLogNYCApp: App {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    seedDataIfNeeded()
                     locationService.setModelContext(modelContainer.mainContext)
                 }
                 .environment(locationService)
         }
         .modelContainer(modelContainer)
-    }
-
-    @MainActor
-    private func seedDataIfNeeded() {
-        StationData.seedIfNeeded(modelContext: modelContainer.mainContext)
     }
 }

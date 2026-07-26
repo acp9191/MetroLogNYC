@@ -5,7 +5,7 @@ import SwiftData
 @main
 struct MetroLogNYCApp: App {
     let modelContainer: ModelContainer
-    @StateObject private var locationService = LocationService.shared
+    @State private var locationService = LocationService.shared
 
     init() {
         do {
@@ -29,7 +29,7 @@ struct MetroLogNYCApp: App {
                     seedDataIfNeeded()
                     locationService.setModelContext(modelContainer.mainContext)
                 }
-                .environmentObject(locationService)
+                .environment(locationService)
         }
         .modelContainer(modelContainer)
     }

@@ -2,18 +2,23 @@ import Foundation
 import CoreLocation
 import SwiftUI
 import SwiftData
+import Observation
+import OSLog
+
+private let logger = Logger(subsystem: "com.averypeterson.MetroLogNYC", category: "Location")
 
 /// Service that manages location updates and detects nearby unvisited subway stations
 @MainActor
-final class LocationService: NSObject, ObservableObject {
+@Observable
+final class LocationService: NSObject {
     static let shared = LocationService()
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    @Published var currentLocation: CLLocation?
-    @Published var nearbyStationSuggestion: StationDisplayItem?
-    @Published var isLocationEnabled: Bool = false {
+    var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    var currentLocation: CLLocation?
+    var nearbyStationSuggestion: StationDisplayItem?
+    var isLocationEnabled: Bool = false {
         didSet {
             if isLocationEnabled {
                 startLocationUpdates()
@@ -25,20 +30,20 @@ final class LocationService: NSObject, ObservableObject {
 
     // MARK: - Private Properties
 
-    private let locationManager = CLLocationManager()
-    private var modelContext: ModelContext?
+    @ObservationIgnored private let locationManager = CLLocationManager()
+    @ObservationIgnored private var modelContext: ModelContext?
 
     /// Radius in meters to detect nearby stations
-    private let proximityRadius: CLLocationDistance = 75
+    @ObservationIgnored private let proximityRadius: CLLocationDistance = 75
 
     /// Cooldown between suggestions for a specific station in seconds (5 minutes)
-    private let suggestionCooldown: TimeInterval = 300
+    @ObservationIgnored private let suggestionCooldown: TimeInterval = 300
 
     /// Tracks when each station was dismissed (for per-station cooldown)
-    private var dismissedStationTimes: [UUID: Date] = [:]
+    @ObservationIgnored private var dismissedStationTimes: [UUID: Date] = [:]
 
     /// Currently suggested station ID (for hysteresis - don't re-suggest while still in radius)
-    private var currentSuggestionId: UUID?
+    @ObservationIgnored private var currentSuggestionId: UUID?
 
     // MARK: - Initialization
 
@@ -73,7 +78,11 @@ final class LocationService: NSObject, ObservableObject {
     func markSuggestionAsVisited() {
         guard let suggestion = nearbyStationSuggestion else { return }
         suggestion.markVisited()
-        try? modelContext?.save()
+        do {
+            try modelContext?.save()
+        } catch {
+            logger.error("Failed to save visited suggestion: \(error.localizedDescription)")
+        }
         currentSuggestionId = nil
         nearbyStationSuggestion = nil
 

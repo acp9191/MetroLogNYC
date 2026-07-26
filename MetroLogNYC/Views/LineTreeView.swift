@@ -23,21 +23,8 @@ struct TreeStationRow: View {
     private let nodeSize: CGFloat = 12
     private let treeWidth: CGFloat = 40
 
-    // Lines ordered by trunk line (MTA standard grouping)
-    private static let lineOrder = [
-        "1", "2", "3", "4", "5", "6", "7",
-        "A", "C", "E", "B", "D", "F", "M",
-        "G", "J", "Z", "L",
-        "N", "Q", "R", "W",
-        "GS", "FS", "RS", "SIR"
-    ]
-
     private func sortedByTrunk(_ lines: [String]) -> [String] {
-        lines.sorted { line1, line2 in
-            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
-            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
-            return index1 < index2
-        }
+        SubwayLine.sortedByDisplayOrder(lines)
     }
 
     var body: some View {

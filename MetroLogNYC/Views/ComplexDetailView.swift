@@ -1,6 +1,9 @@
 import SwiftUI
 import SwiftData
 import MapKit
+import OSLog
+
+private let logger = Logger(subsystem: "com.averypeterson.MetroLogNYC", category: "ComplexDetail")
 
 /// Detail view for a station complex or standalone station
 struct ComplexDetailView: View {
@@ -9,27 +12,8 @@ struct ComplexDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var cameraPosition: MapCameraPosition = .automatic
 
-    // Lines ordered by trunk line (MTA standard grouping)
-    private static let lineOrder = [
-        "1", "2", "3",           // Broadway-7th Ave (red)
-        "4", "5", "6",           // Lexington Ave (green)
-        "7",                     // Flushing (purple)
-        "A", "C", "E",           // 8th Ave (blue)
-        "B", "D", "F", "M",      // 6th Ave (orange)
-        "G",                     // Crosstown (lime)
-        "J", "Z",                // Nassau St (brown)
-        "L",                     // Canarsie (gray)
-        "N", "Q", "R", "W",      // Broadway (yellow)
-        "GS", "FS", "RS",        // Shuttles
-        "SIR"                    // Staten Island
-    ]
-
     private var sortedLines: [String] {
-        item.lines.sorted { line1, line2 in
-            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
-            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
-            return index1 < index2
-        }
+        SubwayLine.sortedByDisplayOrder(item.lines)
     }
 
     private var centerCoordinate: CLLocationCoordinate2D {
@@ -178,7 +162,11 @@ struct ComplexDetailView: View {
     private var visitButton: some View {
         Button {
             item.toggleVisited()
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("Failed to save visit toggle: \(error.localizedDescription)")
+            }
         } label: {
             Text(item.isVisited ? "Unvisit" : "Visit")
                 .font(.subheadline.bold())
@@ -233,21 +221,8 @@ struct ComplexDetailView: View {
 struct EntranceRow: View {
     let station: Station
 
-    // Lines ordered by trunk line (MTA standard grouping)
-    private static let lineOrder = [
-        "1", "2", "3", "4", "5", "6", "7",
-        "A", "C", "E", "B", "D", "F", "M",
-        "G", "J", "Z", "L",
-        "N", "Q", "R", "W",
-        "GS", "FS", "RS", "SIR"
-    ]
-
     private var sortedLines: [String] {
-        station.lines.sorted { line1, line2 in
-            let index1 = Self.lineOrder.firstIndex(of: line1) ?? Int.max
-            let index2 = Self.lineOrder.firstIndex(of: line2) ?? Int.max
-            return index1 < index2
-        }
+        SubwayLine.sortedByDisplayOrder(station.lines)
     }
 
     var body: some View {

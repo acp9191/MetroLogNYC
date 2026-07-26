@@ -133,6 +133,25 @@ enum SubwayLine: String, CaseIterable, Identifiable {
         let normalized = string.uppercased().trimmingCharacters(in: .whitespaces)
         return SubwayLine(rawValue: normalized) ?? SubwayLine(rawValue: string)
     }
+
+    /// Line identifiers in MTA trunk-line display order.
+    static let displayOrder: [String] = [
+        "1", "2", "3", "4", "5", "6", "7",
+        "A", "C", "E", "B", "D", "F", "M",
+        "G", "J", "Z", "L",
+        "N", "Q", "R", "W",
+        "GS", "FS", "RS", "SIR"
+    ]
+
+    /// O(1) rank lookup used to sort line ids in display order.
+    private static let displayRank: [String: Int] =
+        Dictionary(uniqueKeysWithValues: displayOrder.enumerated().map { ($1, $0) })
+
+    /// Sort line identifiers into MTA trunk-line display order.
+    /// Uses a precomputed rank table so the comparator is O(1) instead of a linear scan.
+    static func sortedByDisplayOrder(_ lines: [String]) -> [String] {
+        lines.sorted { (displayRank[$0] ?? .max) < (displayRank[$1] ?? .max) }
+    }
 }
 
 // MARK: - Line Badge View

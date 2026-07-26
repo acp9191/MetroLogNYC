@@ -1,5 +1,8 @@
 import Foundation
 import SwiftData
+import OSLog
+
+private let logger = Logger(subsystem: "com.averypeterson.MetroLogNYC", category: "StationData")
 
 /// Seed data for all NYC subway stations
 /// Data sourced from MTA GTFS feeds
@@ -43,7 +46,11 @@ struct StationData {
             modelContext.insert(station)
         }
 
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            logger.error("Failed to seed station data: \(error.localizedDescription)")
+        }
     }
 
     /// Station info for seeding

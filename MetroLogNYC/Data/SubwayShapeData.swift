@@ -1,16 +1,17 @@
 import Foundation
 import CoreLocation
+import OSLog
+
+private let logger = Logger(subsystem: "com.averypeterson.MetroLogNYC", category: "SubwayShapes")
 
 /// Represents the shape data for a subway line
 struct SubwayLineShape: Sendable {
     let lineId: String
-    let color: String  // Hex color from GTFS
     let shapes: [[CLLocationCoordinate2D]]  // Multiple shapes per line (for branches, express/local variants)
 }
 
 /// JSON structure for Codable parsing
 private struct ShapeJSON: Codable {
-    let color: String
     let shapes: [[[Double]]]
 }
 
@@ -28,19 +29,29 @@ class SubwayShapeService {
     /// Preload shapes in background - call at app startup
     func preload() {
         guard loadTask == nil && !isLoaded else { return }
-        loadTask = Task.detached(priority: .userInitiated) {
-            await self.loadShapesAsync()
-        }
+        loadTask = Task { await self.loadShapesAsync() }
     }
 
     /// Load shapes asynchronously
     private func loadShapesAsync() async {
         guard !isLoaded else { return }
 
+        // Decode off the main actor so the JSON parse doesn't block the UI thread,
+        // then hop back to the main actor to publish the result.
+        let shapes = await Task.detached(priority: .userInitiated) {
+            Self.decodeShapes()
+        }.value
+
+        self.lineShapes = shapes
+        self.isLoaded = true
+    }
+
+    /// Parse the bundled shapes JSON. Runs off the main actor.
+    private nonisolated static func decodeShapes() -> [String: SubwayLineShape] {
         guard let url = Bundle.main.url(forResource: "subway_shapes", withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
-            print("Failed to load subway_shapes.json")
-            return
+            logger.error("Failed to load subway_shapes.json")
+            return [:]
         }
 
         do {
@@ -55,19 +66,12 @@ class SubwayShapeService {
                     }
                 }.filter { !$0.isEmpty }
 
-                shapes[lineId] = SubwayLineShape(
-                    lineId: lineId,
-                    color: lineData.color,
-                    shapes: coordinates
-                )
+                shapes[lineId] = SubwayLineShape(lineId: lineId, shapes: coordinates)
             }
-
-            await MainActor.run {
-                self.lineShapes = shapes
-                self.isLoaded = true
-            }
+            return shapes
         } catch {
-            print("Error parsing subway_shapes.json: \(error)")
+            logger.error("Error parsing subway_shapes.json: \(error.localizedDescription)")
+            return [:]
         }
     }
 

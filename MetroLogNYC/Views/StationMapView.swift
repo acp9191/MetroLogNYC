@@ -5,7 +5,7 @@ import MapKit
 /// Map view showing all subway stations with line colors
 struct StationMapView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var locationService: LocationService
+    @Environment(LocationService.self) private var locationService
     @Query private var stations: [Station]
 
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
@@ -18,6 +18,7 @@ struct StationMapView: View {
     @State private var lineFilter: String? = nil
     @State private var showRouteLines = true
     @State private var shapesLoaded = false
+    @State private var visibleRegion: MKCoordinateRegion?
 
     private var filteredStations: [Station] {
         var result = stations
@@ -40,21 +41,25 @@ struct StationMapView: View {
         return result
     }
 
-    // All lines for the filter
-    // Lines ordered by trunk line (MTA standard grouping)
-    private let allLines = [
-        "1", "2", "3",           // Broadway-7th Ave (red)
-        "4", "5", "6",           // Lexington Ave (green)
-        "7",                     // Flushing (purple)
-        "A", "C", "E",           // 8th Ave (blue)
-        "B", "D", "F", "M",      // 6th Ave (orange)
-        "G",                     // Crosstown (lime)
-        "J", "Z",                // Nassau St (brown)
-        "L",                     // Canarsie (gray)
-        "N", "Q", "R", "W",      // Broadway (yellow)
-        "GS", "FS", "RS",        // Shuttles
-        "SIR"                    // Staten Island
-    ]
+    /// Stations to actually render as annotations.
+    /// A single-line filter already yields a small set, so render all of it. Otherwise cull
+    /// to the visible region (plus a margin) so we don't diff ~500 annotation views at once.
+    private var renderedStations: [Station] {
+        let result = filteredStations
+        guard lineFilter == nil, let region = visibleRegion else {
+            return result
+        }
+        // Half-span expanded by 1.5x so annotations exist just outside the viewport while panning.
+        let latMargin = region.span.latitudeDelta * 0.75
+        let lonMargin = region.span.longitudeDelta * 0.75
+        return result.filter { station in
+            abs(station.latitude - region.center.latitude) <= latMargin &&
+            abs(station.longitude - region.center.longitude) <= lonMargin
+        }
+    }
+
+    // All lines for the filter, ordered by trunk line (MTA standard grouping)
+    private let allLines = SubwayLine.displayOrder
 
     /// Shapes to display based on current filter
     private var filteredShapes: [SubwayLineShape] {
@@ -83,7 +88,7 @@ struct StationMapView: View {
                     }
 
                     // Station markers
-                    ForEach(filteredStations) { station in
+                    ForEach(renderedStations) { station in
                         Annotation(
                             station.name,
                             coordinate: station.coordinate,
@@ -108,6 +113,9 @@ struct StationMapView: View {
                 .mapControls {
                     MapCompass()
                     MapScaleView()
+                }
+                .onMapCameraChange(frequency: .onEnd) { context in
+                    visibleRegion = context.region
                 }
 
                 // Floating controls
@@ -289,5 +297,5 @@ struct StationMarker: View {
 #Preview {
     StationMapView()
         .modelContainer(for: Station.self, inMemory: true)
-        .environmentObject(LocationService.shared)
+        .environment(LocationService.shared)
 }

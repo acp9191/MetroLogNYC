@@ -4,8 +4,7 @@ import SwiftData
 /// Main content view with tab navigation
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var locationService: LocationService
-    @Query private var stations: [Station]
+    @Environment(LocationService.self) private var locationService
     @State private var selectedTab = 0
 
     var body: some View {
@@ -51,5 +50,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .modelContainer(for: Station.self, inMemory: true)
-        .environmentObject(LocationService.shared)
+        .environment(LocationService.shared)
 }

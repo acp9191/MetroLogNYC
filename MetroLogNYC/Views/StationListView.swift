@@ -15,12 +15,8 @@ struct StationListView: View {
     @State private var selectedItem: StationDisplayItem?
     @State private var showingFilters = false
 
-    /// Create display items from stations and complexes
-    private var displayItems: [StationDisplayItem] {
-        StationDisplayItem.createDisplayItems(stations: stations, complexes: complexes)
-    }
-
-    private var filteredItems: [StationDisplayItem] {
+    /// Apply the active search / borough / line / visited filters and sort.
+    private func filteredItems(from displayItems: [StationDisplayItem]) -> [StationDisplayItem] {
         var result = displayItems
 
         // Search filter
@@ -69,44 +65,24 @@ struct StationListView: View {
         return result
     }
 
-    /// Count of unique locations (complexes + standalone stations)
-    private var totalLocationCount: Int {
-        displayItems.count
-    }
-
-    /// Count of visited locations
-    private var visitedLocationCount: Int {
-        displayItems.filter { $0.isVisited }.count
-    }
-
-    /// Progress percentage
-    private var progress: Double {
-        guard totalLocationCount > 0 else { return 0 }
-        return Double(visitedLocationCount) / Double(totalLocationCount)
-    }
-
     // Lines ordered by trunk line (MTA standard grouping)
-    private let allLines = [
-        "1", "2", "3",           // Broadway-7th Ave (red)
-        "4", "5", "6",           // Lexington Ave (green)
-        "7",                     // Flushing (purple)
-        "A", "C", "E",           // 8th Ave (blue)
-        "B", "D", "F", "M",      // 6th Ave (orange)
-        "G",                     // Crosstown (lime)
-        "J", "Z",                // Nassau St (brown)
-        "L",                     // Canarsie (gray)
-        "N", "Q", "R", "W",      // Broadway (yellow)
-        "GS", "FS", "RS",        // Shuttles
-        "SIR"                    // Staten Island
-    ]
+    private let allLines = SubwayLine.displayOrder
 
     var body: some View {
-        NavigationStack {
+        let displayItems = StationDisplayItem.createDisplayItems(stations: stations, complexes: complexes)
+        let totalCount = displayItems.count
+        let visitedCount = displayItems.reduce(into: 0) { count, item in
+            if item.isVisited { count += 1 }
+        }
+        let progress = totalCount > 0 ? Double(visitedCount) / Double(totalCount) : 0
+        let visibleItems = filteredItems(from: displayItems)
+
+        return NavigationStack {
             VStack(spacing: 0) {
                 // Progress Header
                 ProgressHeader(
-                    visitedCount: visitedLocationCount,
-                    totalCount: totalLocationCount,
+                    visitedCount: visitedCount,
+                    totalCount: totalCount,
                     progress: progress
                 )
 
@@ -124,7 +100,7 @@ struct StationListView: View {
 
                 // Station List
                 List {
-                    ForEach(filteredItems) { item in
+                    ForEach(visibleItems) { item in
                         StationDisplayRowView(item: item) {
                             item.toggleVisited()
                         }

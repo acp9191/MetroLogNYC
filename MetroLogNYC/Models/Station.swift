@@ -107,3 +107,12 @@ enum StationSort: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 }
+
+extension Double {
+    /// Converts a [0,1] progress fraction to a display percentage,
+    /// showing at least 1% when visited > 0 and the true value rounds to 0.
+    func displayPercent(visited: Int) -> Int {
+        let pct = Int(self * 100)
+        return visited > 0 && pct == 0 ? 1 : pct
+    }
+}

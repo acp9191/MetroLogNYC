@@ -54,66 +54,48 @@ struct LineDetailView: View {
         return Double(visitedCount) / Double(lineStations.count)
     }
 
-    private var lineName: String {
-        switch line {
-        case "1", "2", "3": return "\(line) Train - Broadway-Seventh Avenue"
-        case "4", "5", "6": return "\(line) Train - Lexington Avenue"
-        case "7": return "7 Train - Flushing"
-        case "A", "C", "E": return "\(line) Train - Eighth Avenue"
-        case "B", "D", "F", "M": return "\(line) Train - Sixth Avenue"
-        case "G": return "G Train - Crosstown"
-        case "J", "Z": return "\(line) Train - Nassau Street"
-        case "L": return "L Train - Canarsie"
-        case "N", "Q", "R", "W": return "\(line) Train - Broadway"
-        case "GS": return "42 St Shuttle"
-        case "FS": return "Franklin Av Shuttle"
-        case "RS": return "Rockaway Park Shuttle"
-        case "SIR": return "Staten Island Railway"
-        default: return "\(line) Train"
-        }
+    private struct LineNameInfo {
+        let displayName: String
+        let toolbarTitle: String
+        let officialName: String
     }
 
-    private var toolbarTitle: String {
-        switch line {
-        case "GS": return "42 St Shuttle"
-        case "FS": return "Franklin Shuttle"
-        case "RS": return "Rockaway Shuttle"
-        case "SIR": return "SIR"
-        default: return "\(line) Train"
-        }
+    private static let lineNames: [String: LineNameInfo] = [
+        "1":   .init(displayName: "1 Train - Broadway-Seventh Avenue",  toolbarTitle: "1 Train",          officialName: "Broadway–7 Avenue Local"),
+        "2":   .init(displayName: "2 Train - Broadway-Seventh Avenue",  toolbarTitle: "2 Train",          officialName: "7 Avenue Express"),
+        "3":   .init(displayName: "3 Train - Broadway-Seventh Avenue",  toolbarTitle: "3 Train",          officialName: "7 Avenue Express"),
+        "4":   .init(displayName: "4 Train - Lexington Avenue",         toolbarTitle: "4 Train",          officialName: "Lexington Avenue Express"),
+        "5":   .init(displayName: "5 Train - Lexington Avenue",         toolbarTitle: "5 Train",          officialName: "Lexington Avenue Express"),
+        "6":   .init(displayName: "6 Train - Lexington Avenue",         toolbarTitle: "6 Train",          officialName: "Lexington Avenue Local"),
+        "7":   .init(displayName: "7 Train - Flushing",                 toolbarTitle: "7 Train",          officialName: "Flushing Local"),
+        "A":   .init(displayName: "A Train - Eighth Avenue",            toolbarTitle: "A Train",          officialName: "8 Avenue Express"),
+        "B":   .init(displayName: "B Train - Sixth Avenue",             toolbarTitle: "B Train",          officialName: "6 Avenue Express"),
+        "C":   .init(displayName: "C Train - Eighth Avenue",            toolbarTitle: "C Train",          officialName: "8 Avenue Local"),
+        "D":   .init(displayName: "D Train - Sixth Avenue",             toolbarTitle: "D Train",          officialName: "6 Avenue Express"),
+        "E":   .init(displayName: "E Train - Eighth Avenue",            toolbarTitle: "E Train",          officialName: "8 Avenue Local"),
+        "F":   .init(displayName: "F Train - Sixth Avenue",             toolbarTitle: "F Train",          officialName: "Queens Blvd Express/6 Av Local"),
+        "G":   .init(displayName: "G Train - Crosstown",                toolbarTitle: "G Train",          officialName: "Brooklyn–Queens Crosstown"),
+        "J":   .init(displayName: "J Train - Nassau Street",            toolbarTitle: "J Train",          officialName: "Nassau Street Local"),
+        "Z":   .init(displayName: "Z Train - Nassau Street",            toolbarTitle: "Z Train",          officialName: "Nassau Street Express"),
+        "L":   .init(displayName: "L Train - Canarsie",                 toolbarTitle: "L Train",          officialName: "14 Street–Canarsie Local"),
+        "M":   .init(displayName: "M Train - Sixth Avenue",             toolbarTitle: "M Train",          officialName: "Queens Blvd/6 Av/Myrtle Av Local"),
+        "N":   .init(displayName: "N Train - Broadway",                 toolbarTitle: "N Train",          officialName: "Broadway Express"),
+        "Q":   .init(displayName: "Q Train - Broadway",                 toolbarTitle: "Q Train",          officialName: "Broadway Express"),
+        "R":   .init(displayName: "R Train - Broadway",                 toolbarTitle: "R Train",          officialName: "Broadway Local"),
+        "W":   .init(displayName: "W Train - Broadway",                 toolbarTitle: "W Train",          officialName: "Broadway Local"),
+        "GS":  .init(displayName: "42 St Shuttle",                      toolbarTitle: "42 St Shuttle",    officialName: "42 Street Shuttle"),
+        "FS":  .init(displayName: "Franklin Av Shuttle",                toolbarTitle: "Franklin Shuttle", officialName: "Franklin Avenue Shuttle"),
+        "RS":  .init(displayName: "Rockaway Park Shuttle",              toolbarTitle: "Rockaway Shuttle", officialName: "Rockaway Park Shuttle"),
+        "SIR": .init(displayName: "Staten Island Railway",              toolbarTitle: "SIR",              officialName: "Staten Island Railway"),
+    ]
+
+    private var lineInfo: LineNameInfo {
+        Self.lineNames[line] ?? .init(displayName: "\(line) Train", toolbarTitle: "\(line) Train", officialName: "")
     }
 
-    private var officialLineName: String {
-        switch line {
-        case "1": return "Broadway–7 Avenue Local"
-        case "2": return "7 Avenue Express"
-        case "3": return "7 Avenue Express"
-        case "4": return "Lexington Avenue Express"
-        case "5": return "Lexington Avenue Express"
-        case "6": return "Lexington Avenue Local"
-        case "7": return "Flushing Local"
-        case "A": return "8 Avenue Express"
-        case "B": return "6 Avenue Express"
-        case "C": return "8 Avenue Local"
-        case "D": return "6 Avenue Express"
-        case "E": return "8 Avenue Local"
-        case "F": return "Queens Blvd Express/6 Av Local"
-        case "G": return "Brooklyn–Queens Crosstown"
-        case "J": return "Nassau Street Local"
-        case "L": return "14 Street–Canarsie Local"
-        case "M": return "Queens Blvd/6 Av/Myrtle Av Local"
-        case "N": return "Broadway Express"
-        case "Q": return "Broadway Express"
-        case "R": return "Broadway Local"
-        case "W": return "Broadway Local"
-        case "Z": return "Nassau Street Express"
-        case "GS": return "42 Street Shuttle"
-        case "FS": return "Franklin Avenue Shuttle"
-        case "RS": return "Rockaway Park Shuttle"
-        case "SIR": return "Staten Island Railway"
-        default: return ""
-        }
-    }
+    private var lineName: String { lineInfo.displayName }
+    private var toolbarTitle: String { lineInfo.toolbarTitle }
+    private var officialLineName: String { lineInfo.officialName }
 
     /// Get stations for a branch by name
     private func stationsForBranch(_ branch: LineRouteData.Branch) -> [Station] {
@@ -408,13 +390,8 @@ struct LineProgressHeader: View {
         SubwayLine.from(line)?.color ?? .gray
     }
 
-    /// Shows at least 1% if any progress has been made
     private var progressPercent: Int {
-        let percent = Int(progress * 100)
-        if visitedCount > 0 && percent == 0 {
-            return 1
-        }
-        return percent
+        progress.displayPercent(visited: visitedCount)
     }
 
     var body: some View {

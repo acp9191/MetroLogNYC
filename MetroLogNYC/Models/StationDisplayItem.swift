@@ -20,6 +20,9 @@ struct StationDisplayItem: Identifiable, Hashable {
     // For standalone stations
     let station: Station?
 
+    /// Center coordinate for map display (stored at init; coordinates don't change after seeding)
+    let centerCoordinate: CLLocationCoordinate2D
+
     /// Create a display item from a station complex
     init(complex: StationComplex) {
         self.id = complex.id
@@ -28,8 +31,17 @@ struct StationDisplayItem: Identifiable, Hashable {
         self.lines = complex.allLines
         self.isComplex = true
         self.complex = complex
-        self.stations = complex.stations
+        let stations = complex.stations
+        self.stations = stations
         self.station = nil
+        if stations.isEmpty {
+            self.centerCoordinate = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
+        } else {
+            let totalLat = stations.reduce(0.0) { $0 + $1.latitude }
+            let totalLon = stations.reduce(0.0) { $0 + $1.longitude }
+            let count = Double(stations.count)
+            self.centerCoordinate = CLLocationCoordinate2D(latitude: totalLat / count, longitude: totalLon / count)
+        }
     }
 
     /// Create a display item from a standalone station (not part of any complex)
@@ -42,6 +54,7 @@ struct StationDisplayItem: Identifiable, Hashable {
         self.complex = nil
         self.stations = [station]
         self.station = station
+        self.centerCoordinate = station.coordinate
     }
 
     // MARK: - Visit Status
@@ -54,8 +67,13 @@ struct StationDisplayItem: Identifiable, Hashable {
     /// Whether the item is partially visited (only relevant for complexes)
     var isPartiallyVisited: Bool {
         guard isComplex else { return false }
-        let visitedCount = stations.filter { $0.isVisited }.count
-        return visitedCount > 0 && visitedCount < stations.count
+        var hasVisited = false
+        var hasUnvisited = false
+        for station in stations {
+            if station.isVisited { hasVisited = true } else { hasUnvisited = true }
+            if hasVisited && hasUnvisited { return true }
+        }
+        return false
     }
 
     /// Number of visited stations
@@ -71,19 +89,6 @@ struct StationDisplayItem: Identifiable, Hashable {
     /// Most recent visit date among all stations
     var lastVisitedDate: Date? {
         stations.compactMap { $0.visitedDate }.max()
-    }
-
-    /// Center coordinate for displaying on map (average of all station coordinates)
-    var centerCoordinate: CLLocationCoordinate2D {
-        guard !stations.isEmpty else {
-            return CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
-        }
-        let totalLat = stations.reduce(0.0) { $0 + $1.latitude }
-        let totalLon = stations.reduce(0.0) { $0 + $1.longitude }
-        return CLLocationCoordinate2D(
-            latitude: totalLat / Double(stations.count),
-            longitude: totalLon / Double(stations.count)
-        )
     }
 
     // MARK: - Actions

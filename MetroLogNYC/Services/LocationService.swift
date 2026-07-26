@@ -86,8 +86,9 @@ final class LocationService: NSObject {
         currentSuggestionId = nil
         nearbyStationSuggestion = nil
 
-        // Re-check for other nearby stations after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        // Re-check for other nearby stations after the dismiss animation settles
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(0.3))
             guard let self, let location = self.currentLocation else { return }
             self.checkForNearbyStations(at: location)
         }
@@ -100,8 +101,9 @@ final class LocationService: NSObject {
         currentSuggestionId = nil
         nearbyStationSuggestion = nil
 
-        // Re-check for other nearby stations after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        // Re-check for other nearby stations after the dismiss animation settles
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(0.3))
             guard let self, let location = self.currentLocation else { return }
             self.checkForNearbyStations(at: location)
         }
@@ -153,6 +155,8 @@ final class LocationService: NSObject {
         var nearestDistance: CLLocationDistance = .infinity
 
         let now = Date()
+        // Prune cooldowns that have already expired to keep the dict small
+        dismissedStationTimes = dismissedStationTimes.filter { now.timeIntervalSince($0.value) < suggestionCooldown }
         for item in unvisitedItems {
             // Skip if dismissed within cooldown period
             if let dismissedTime = dismissedStationTimes[item.id],

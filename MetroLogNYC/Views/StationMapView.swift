@@ -120,40 +120,10 @@ struct StationMapView: View {
 
                 // Floating controls
                 VStack(spacing: 0) {
-                    // Top bar with line filter
-                    VStack(spacing: 8) {
-                        // Line filter scroll
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 6) {
-                                // All lines button
-                                Button {
-                                    lineFilter = nil
-                                } label: {
-                                    Text("All")
-                                        .font(.caption.bold())
-                                        .foregroundStyle(lineFilter == nil ? .white : .primary)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(lineFilter == nil ? Color.blue : Color(.secondarySystemBackground))
-                                        .clipShape(Capsule())
-                                }
-
-                                ForEach(allLines, id: \.self) { line in
-                                    Button {
-                                        lineFilter = lineFilter == line ? nil : line
-                                    } label: {
-                                        LineBadge(line: line, size: 28)
-                                            .opacity(lineFilter == nil || lineFilter == line ? 1.0 : 0.4)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .padding(.vertical, 8)
+                    LineFilterBar(selectedLine: $lineFilter, allLines: allLines)
                         .background(.ultraThinMaterial)
-                    }
-                    .padding(.top, 8)
-                    .padding(.horizontal)
+                        .padding(.top, 8)
+                        .padding(.horizontal)
 
                     Spacer()
 

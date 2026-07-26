@@ -101,13 +101,8 @@ struct ProgressHeroView: View {
     let totalCount: Int
     let progress: Double
 
-    /// Shows at least 1% if any progress has been made
     private var progressPercent: Int {
-        let percent = Int(progress * 100)
-        if visitedCount > 0 && percent == 0 {
-            return 1
-        }
-        return percent
+        progress.displayPercent(visited: visitedCount)
     }
 
     var body: some View {

@@ -12,7 +12,8 @@ struct NearbySuggestionBannerView: View {
         withAnimation(.easeOut(duration: 0.25)) {
             isVisible = false
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.25))
             action()
         }
     }

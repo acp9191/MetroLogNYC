@@ -16,50 +16,27 @@ struct StationListView: View {
     @State private var showingFilters = false
 
     /// Apply the active search / borough / line / visited filters and sort.
+    /// Single-pass filter combining all active predicates, followed by a sort.
     private func filteredItems(from displayItems: [StationDisplayItem]) -> [StationDisplayItem] {
-        var result = displayItems
-
-        // Search filter
-        if !searchText.isEmpty {
-            result = result.filter { item in
-                item.name.localizedCaseInsensitiveContains(searchText) ||
-                item.lines.contains { $0.localizedCaseInsensitiveContains(searchText) } ||
-                item.borough.rawValue.localizedCaseInsensitiveContains(searchText)
-            }
+        var result = displayItems.filter { item in
+            (searchText.isEmpty
+                || item.name.localizedCaseInsensitiveContains(searchText)
+                || item.lines.contains { $0.localizedCaseInsensitiveContains(searchText) }
+                || item.borough.rawValue.localizedCaseInsensitiveContains(searchText))
+            && (selectedBorough == nil || item.borough == selectedBorough)
+            && (selectedLine == nil || item.lines.contains(selectedLine!))
+            && (visitedFilter == .all
+                || (visitedFilter == .visited && item.isVisited)
+                || (visitedFilter == .unvisited && !item.isVisited))
         }
 
-        // Borough filter
-        if let borough = selectedBorough {
-            result = result.filter { $0.borough == borough }
-        }
-
-        // Line filter
-        if let line = selectedLine {
-            result = result.filter { $0.lines.contains(line) }
-        }
-
-        // Visited filter
-        switch visitedFilter {
-        case .all:
-            break
-        case .visited:
-            result = result.filter { $0.isVisited }
-        case .unvisited:
-            result = result.filter { !$0.isVisited }
-        }
-
-        // Sorting
         switch sortOption {
         case .name:
             result.sort { $0.name < $1.name }
         case .borough:
             result.sort { ($0.borough.rawValue, $0.name) < ($1.borough.rawValue, $1.name) }
         case .recentlyVisited:
-            result.sort { item1, item2 in
-                let date1 = item1.lastVisitedDate ?? .distantPast
-                let date2 = item2.lastVisitedDate ?? .distantPast
-                return date1 > date2
-            }
+            result.sort { ($0.lastVisitedDate ?? .distantPast) > ($1.lastVisitedDate ?? .distantPast) }
         }
 
         return result
@@ -88,6 +65,7 @@ struct StationListView: View {
 
                 // Line Filter Bar
                 LineFilterBar(selectedLine: $selectedLine, allLines: allLines)
+                    .background(Color(.secondarySystemBackground))
 
                 // Active Filter Chips (borough and status only)
                 if selectedBorough != nil || visitedFilter != .all {
@@ -195,13 +173,8 @@ struct ProgressHeader: View {
     let totalCount: Int
     let progress: Double
 
-    /// Shows at least 1% if any progress has been made
     private var progressPercent: Int {
-        let percent = Int(progress * 100)
-        if visitedCount > 0 && percent == 0 {
-            return 1
-        }
-        return percent
+        progress.displayPercent(visited: visitedCount)
     }
 
     var body: some View {
@@ -312,7 +285,6 @@ struct LineFilterBar: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color(.secondarySystemBackground))
     }
 }
 
